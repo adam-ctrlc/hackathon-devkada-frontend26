@@ -4,7 +4,15 @@ import { Card } from "../../../components/ui/Card.jsx";
 import { Button } from "../../../components/ui/Button.jsx";
 import { Input, Field } from "../../../components/ui/Input.jsx";
 import { Select } from "../../../components/Select.jsx";
-import { Basket, CheckCircle, Plus, Trash } from "@phosphor-icons/react";
+import {
+  Basket,
+  CheckCircle,
+  Plus,
+  Trash,
+  CurrencyCircleDollar,
+  Warning,
+  ArrowsClockwise,
+} from "@phosphor-icons/react";
 import { apiRequest } from "../../../lib/api.js";
 import {
   clearAuthSession,
@@ -297,6 +305,11 @@ export default function Budget() {
     );
   }
 
+  const spentPct =
+    budgetForm.amount && summary?.totalSpent != null
+      ? Math.min(100, (summary.totalSpent / Number(budgetForm.amount)) * 100)
+      : null;
+
   return (
     <div className="px-4 sm:px-6 lg:px-10 py-6 lg:py-8 max-w-[1180px] relative">
       {toast && (
@@ -305,6 +318,7 @@ export default function Budget() {
         </div>
       )}
 
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-7">
         <div>
           <div className="text-[11px] tracking-[0.18em] uppercase text-brand-600 font-semibold mb-2">
@@ -313,13 +327,13 @@ export default function Budget() {
           <h1 className="font-display text-[34px] leading-[1.05] tracking-tight text-slate-900">
             Plan what to buy
           </h1>
-          <p className="text-slate-600 mt-2 max-w-[600px]">
+          <p className="text-slate-600 mt-2 max-w-[560px]">
             Log grocery plans or actual spending. Calendar and insights use this
             alongside your scans.
           </p>
         </div>
         <Button
-          variant="line"
+          variant="ghost"
           size="sm"
           onClick={() => navigate("/u/calendar")}
         >
@@ -327,270 +341,299 @@ export default function Budget() {
         </Button>
       </div>
 
-      <div className="space-y-5 mb-5">
-        <Card className="p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
-            <div className="lg:col-span-4 rounded-xl bg-slate-50 ring-1 ring-slate-200 p-4">
-              <div>
-                <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
-                  Profile budget
-                </div>
-                <div className="mt-1 flex items-end gap-2">
-                  <span className="pb-1 text-[13px] font-semibold text-brand-700">
-                    {budgetForm.currency}
-                  </span>
-                  <input
-                    type="number"
-                    min="0"
-                    value={budgetForm.amount}
-                    onChange={(event) => {
-                      setBudgetError("");
-                      setBudgetForm((current) => ({
-                        ...current,
-                        amount: event.target.value,
-                      }));
-                    }}
-                    placeholder="9000"
-                    className="min-w-0 flex-1 bg-transparent font-display text-[24px] leading-none text-slate-900 outline-none placeholder:text-slate-300"
-                  />
-                </div>
-                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <Select
-                    value={budgetForm.currency}
-                    onChange={(event) => {
-                      setBudgetError("");
-                      setBudgetForm((current) => ({
-                        ...current,
-                        currency: event.target.value,
-                      }));
-                    }}
-                    className="!bg-slate-50 !ring-slate-200"
-                  >
-                    <option value="PHP">PHP</option>
-                    <option value="USD">USD</option>
-                    <option value="SGD">SGD</option>
-                    <option value="EUR">EUR</option>
-                  </Select>
-                  <Select
-                    value={budgetForm.frequency}
-                    onChange={(event) => {
-                      setBudgetError("");
-                      setBudgetForm((current) => ({
-                        ...current,
-                        frequency: event.target.value,
-                      }));
-                    }}
-                    className="!bg-slate-50 !ring-slate-200"
-                  >
-                    <option value="daily">Daily</option>
-                    <option value="weekly">Weekly</option>
-                    <option value="monthly">Monthly</option>
-                  </Select>
-                </div>
-                <div className="mt-3 flex items-center justify-between gap-3">
-                  <span className="text-[12px] text-slate-500">
-                    Alerts and insights.
-                  </span>
-                  <Button
-                    variant="line"
-                    size="sm"
-                    onClick={saveProfileBudget}
-                    disabled={savingBudget}
-                    className="shrink-0"
-                  >
-                    {savingBudget ? "Saving..." : "Save"}
-                  </Button>
-                </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        {/* Left sidebar */}
+        <div className="lg:col-span-4 space-y-4">
+          {/* Budget settings */}
+          <Card className="p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-7 h-7 rounded-lg bg-brand-50 grid place-items-center">
+                <CurrencyCircleDollar size={14} className="text-brand-600" />
               </div>
-              {budgetError && (
-                <div className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-[12px] text-red-700 ring-1 ring-red-100">
-                  {budgetError}
-                </div>
-              )}
+              <span className="font-semibold text-[13px] text-slate-800">
+                Budget limit
+              </span>
             </div>
-            <div className="lg:col-span-4 rounded-xl bg-slate-50 ring-1 ring-slate-200 p-4">
-              <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
+
+            <div className="bg-slate-50 ring-1 ring-slate-100 rounded-xl p-4 mb-3">
+              <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">
+                {budgetForm.frequency} limit
+              </div>
+              <div className="flex items-end gap-1.5">
+                <span className="text-[14px] font-semibold text-brand-600 pb-0.5">
+                  {budgetForm.currency}
+                </span>
+                <input
+                  type="number"
+                  min="0"
+                  value={budgetForm.amount}
+                  onChange={(event) => {
+                    setBudgetError("");
+                    setBudgetForm((current) => ({
+                      ...current,
+                      amount: event.target.value,
+                    }));
+                  }}
+                  placeholder="0"
+                  className="flex-1 min-w-0 bg-transparent font-display text-[30px] leading-none text-slate-900 outline-none placeholder:text-slate-300 w-full"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              <Select
+                value={budgetForm.currency}
+                onChange={(event) => {
+                  setBudgetError("");
+                  setBudgetForm((c) => ({
+                    ...c,
+                    currency: event.target.value,
+                  }));
+                }}
+              >
+                <option value="PHP">PHP</option>
+                <option value="USD">USD</option>
+                <option value="SGD">SGD</option>
+                <option value="EUR">EUR</option>
+              </Select>
+              <Select
+                value={budgetForm.frequency}
+                onChange={(event) => {
+                  setBudgetError("");
+                  setBudgetForm((c) => ({
+                    ...c,
+                    frequency: event.target.value,
+                  }));
+                }}
+              >
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+              </Select>
+            </div>
+
+            {budgetError && (
+              <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-[12px] text-red-700 ring-1 ring-red-100">
+                {budgetError}
+              </div>
+            )}
+
+            <Button
+              variant="primary"
+              size="sm"
+              className="w-full"
+              onClick={saveProfileBudget}
+              disabled={savingBudget}
+            >
+              {savingBudget ? (
+                <>
+                  <ArrowsClockwise size={13} className="animate-spin" /> Saving…
+                </>
+              ) : (
+                <>
+                  <CheckCircle size={13} /> Save budget
+                </>
+              )}
+            </Button>
+          </Card>
+
+          {/* Spent + Remaining */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-xl bg-slate-50 ring-1 ring-slate-100 p-4">
+              <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-1">
                 Spent
               </div>
-              <div className="mt-1 flex items-end gap-2">
-                <span className="pb-1 text-[13px] font-semibold text-slate-500">
-                  {currency}
-                </span>
-                <span className="font-display text-[24px] text-slate-900 leading-none">
-                  {Number(summary?.totalSpent ?? 0).toFixed(0)}
-                </span>
+              <div className="font-display text-[22px] leading-none text-slate-900">
+                {Number(summary?.totalSpent ?? 0).toFixed(0)}
               </div>
-              <div className="mt-3 text-[12px] text-slate-500">
-                Logged spending
+              <div className="text-[10px] text-slate-400 mt-1.5">
+                {currency} this period
               </div>
             </div>
             <div
-              className={`lg:col-span-4 rounded-xl ring-1 p-4 ${
+              className={`rounded-xl ring-1 p-4 ${
                 overBudget
                   ? "bg-red-50 ring-red-100"
                   : "bg-brand-50 ring-brand-100"
               }`}
             >
               <div
-                className={`text-[10px] uppercase tracking-wider font-semibold ${
-                  overBudget ? "text-red-700" : "text-brand-700"
+                className={`text-[9px] uppercase tracking-wider font-semibold mb-1 ${
+                  overBudget ? "text-red-600" : "text-brand-600"
                 }`}
               >
-                Remaining
+                {overBudget ? "Over" : "Left"}
               </div>
-              <div className="mt-1 flex items-end gap-2">
-                {remaining == null ? (
-                  <span className="font-display text-[24px] text-slate-900 leading-none">
-                    --
-                  </span>
-                ) : (
-                  <>
-                    <span
-                      className={`pb-1 text-[13px] font-semibold ${
-                        overBudget ? "text-red-700" : "text-brand-700"
-                      }`}
-                    >
-                      {currency}
-                    </span>
-                    <span className="font-display text-[24px] text-slate-900 leading-none">
-                      {remaining.toFixed(0)}
-                    </span>
-                  </>
-                )}
+              <div className="font-display text-[22px] leading-none text-slate-900">
+                {remaining == null ? "—" : Math.abs(remaining).toFixed(0)}
               </div>
-              {overBudget && (
-                <div className="text-[12px] text-red-700 mt-3">
-                  Over budget. You can still log this.
-                </div>
-              )}
-              {!overBudget && (
-                <div className="mt-3 text-[12px] text-slate-500">
-                  Available balance
-                </div>
-              )}
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="mb-5">
-            <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
-              Add budget log
-            </div>
-            <h2 className="font-display text-[22px] text-slate-900 mt-1">
-              What are you planning or spending today?
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
-            <Field label="Title" className="lg:col-span-5">
-              <Input
-                value={form.title}
-                onChange={(event) => {
-                  setLogError("");
-                  setForm((f) => ({ ...f, title: event.target.value }));
-                }}
-                placeholder="e.g. Today groceries"
-              />
-            </Field>
-            <Field label="Type" className="lg:col-span-3">
-              <Select
-                value={form.entryType}
-                onChange={(event) => {
-                  setLogError("");
-                  setForm((f) => ({ ...f, entryType: event.target.value }));
-                }}
+              <div
+                className={`text-[10px] mt-1.5 ${
+                  overBudget ? "text-red-500" : "text-slate-400"
+                }`}
               >
-                <option value="planned">Planned</option>
-                <option value="spent">Spent</option>
-              </Select>
-            </Field>
-            <Field label="Date" className="lg:col-span-4">
-              <Input
-                type="date"
-                value={form.date}
-                onChange={(event) => {
-                  setLogError("");
-                  setForm((f) => ({ ...f, date: event.target.value }));
-                }}
-              />
-            </Field>
-          </div>
-          <div className="mt-5 rounded-2xl bg-slate-50 ring-1 ring-slate-200 p-4">
-            <div className="flex flex-col gap-3 mb-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
-                  Items to buy
-                </div>
-                <p className="text-[12px] text-slate-500 mt-0.5">
-                  One food per row. Item amounts become the log total.
-                </p>
+                {overBudget
+                  ? `${currency} over budget`
+                  : `${currency} available`}
               </div>
-              <Button variant="line" size="sm" onClick={addItem}>
-                <Plus size={13} /> Add item
-              </Button>
             </div>
-            <div className="space-y-2">
-              {form.items.map((item, index) => (
+          </div>
+
+          {/* Progress bar */}
+          {spentPct != null && (
+            <div className="px-1">
+              <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
                 <div
-                  key={index}
-                  className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_132px_40px] sm:items-center"
-                >
-                  <Input
-                    value={item.name}
-                    onChange={(event) => {
-                      setLogError("");
-                      updateItem(index, "name", event.target.value);
-                    }}
-                    placeholder="Food item"
-                    className="bg-white"
-                  />
-                  <Input
-                    type="number"
-                    min="0"
-                    value={item.amount}
-                    onChange={(event) => {
-                      setLogError("");
-                      updateItem(index, "amount", event.target.value);
-                    }}
-                    placeholder="Amount"
-                    className="bg-white"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => deleteItem(index)}
-                    aria-label="Delete item"
-                    title="Delete item"
-                    className="h-10 w-10 rounded-lg bg-white ring-1 ring-slate-200 text-slate-500 hover:bg-red-50 hover:text-red-600 hover:ring-red-100 transition inline-flex items-center justify-center"
-                  >
-                    <Trash size={14} />
-                  </button>
-                </div>
-              ))}
+                  className={`h-full rounded-full transition-all ${overBudget ? "bg-red-400" : "bg-brand-500"}`}
+                  style={{ width: `${spentPct}%` }}
+                />
+              </div>
+              <div className="flex justify-between mt-1.5 text-[10px] text-slate-400">
+                <span>0</span>
+                <span className={overBudget ? "text-red-500 font-medium" : ""}>
+                  {Math.round(spentPct)}% used
+                </span>
+                <span>
+                  {currency} {Number(budgetForm.amount).toFixed(0)}
+                </span>
+              </div>
             </div>
-            <div className="mt-3 text-[12px] text-slate-600">
-              Item total:{" "}
-              <span className="font-mono text-slate-900">
-                {currency} {itemTotal.toFixed(0)}
+          )}
+
+          {overBudget && (
+            <div className="flex items-center gap-2 rounded-xl bg-red-50 ring-1 ring-red-100 px-3 py-2.5">
+              <Warning size={13} className="text-red-500 shrink-0" />
+              <span className="text-[12px] text-red-700">
+                Over budget — you can still log.
               </span>
             </div>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 mt-3">
-            <Field label="Note" className="lg:col-span-12">
+          )}
+        </div>
+
+        {/* Right main */}
+        <div className="lg:col-span-8 space-y-4">
+          {/* Add log form */}
+          <Card className="p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-7 h-7 rounded-lg bg-emerald-50 grid place-items-center">
+                <Plus size={14} className="text-emerald-600" />
+              </div>
+              <span className="font-semibold text-[13px] text-slate-800">
+                New log
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_140px_150px] gap-3 mb-4">
+              <Field label="Title">
+                <Input
+                  value={form.title}
+                  onChange={(event) => {
+                    setLogError("");
+                    setForm((f) => ({ ...f, title: event.target.value }));
+                  }}
+                  placeholder="e.g. Weekly groceries"
+                />
+              </Field>
+              <Field label="Type">
+                <Select
+                  value={form.entryType}
+                  onChange={(event) => {
+                    setLogError("");
+                    setForm((f) => ({ ...f, entryType: event.target.value }));
+                  }}
+                >
+                  <option value="planned">Planned</option>
+                  <option value="spent">Spent</option>
+                </Select>
+              </Field>
+              <Field label="Date">
+                <Input
+                  type="date"
+                  value={form.date}
+                  onChange={(event) => {
+                    setLogError("");
+                    setForm((f) => ({ ...f, date: event.target.value }));
+                  }}
+                />
+              </Field>
+            </div>
+
+            {/* Items */}
+            <div className="rounded-xl bg-slate-50 ring-1 ring-slate-100 p-4 mb-3">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
+                    Items
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    One item per row — amounts sum to total.
+                  </p>
+                </div>
+                <Button variant="ghost" size="sm" onClick={addItem}>
+                  <Plus size={12} /> Add row
+                </Button>
+              </div>
+              <div className="space-y-2">
+                {form.items.map((item, index) => (
+                  <div
+                    key={index}
+                    className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_130px_36px] sm:items-center"
+                  >
+                    <Input
+                      value={item.name}
+                      onChange={(event) => {
+                        setLogError("");
+                        updateItem(index, "name", event.target.value);
+                      }}
+                      placeholder="Food item"
+                      className="bg-white"
+                    />
+                    <Input
+                      type="number"
+                      min="0"
+                      value={item.amount}
+                      onChange={(event) => {
+                        setLogError("");
+                        updateItem(index, "amount", event.target.value);
+                      }}
+                      placeholder="Amount"
+                      className="bg-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => deleteItem(index)}
+                      aria-label="Delete item"
+                      className="h-9 w-9 rounded-lg bg-white ring-1 ring-slate-200 text-slate-400 hover:bg-red-50 hover:text-red-600 hover:ring-red-100 transition inline-flex items-center justify-center"
+                    >
+                      <Trash size={13} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 pt-3 border-t border-slate-200 flex items-center justify-between">
+                <span className="text-[11px] text-slate-500">Total</span>
+                <span className="font-mono text-[13px] font-semibold text-slate-900">
+                  {currency} {itemTotal.toFixed(0)}
+                </span>
+              </div>
+            </div>
+
+            <Field label="Note (optional)" className="mb-4">
               <Input
                 value={form.note}
                 onChange={(event) =>
                   setForm((f) => ({ ...f, note: event.target.value }))
                 }
-                placeholder="Optional"
+                placeholder="Any context…"
               />
             </Field>
-          </div>
-          {logError && (
-            <div className="mt-3 rounded-xl bg-red-50 ring-1 ring-red-100 px-3 py-2 text-[12.5px] text-red-700">
-              {logError}
-            </div>
-          )}
-          <div className="mt-4">
+
+            {logError && (
+              <div className="mb-3 rounded-xl bg-red-50 ring-1 ring-red-100 px-3 py-2 text-[12px] text-red-700">
+                {logError}
+              </div>
+            )}
+
             <Button
               variant="primary"
               size="sm"
@@ -602,84 +645,117 @@ export default function Budget() {
                 resolvedLogAmount <= 0
               }
             >
-              <Plus size={14} /> {saving ? "Saving..." : "Save budget log"}
+              {saving ? (
+                <>
+                  <ArrowsClockwise size={13} className="animate-spin" /> Saving…
+                </>
+              ) : (
+                <>
+                  <Plus size={14} /> Save log
+                </>
+              )}
             </Button>
-          </div>
-        </Card>
-      </div>
+          </Card>
 
-      <Card className="p-0 overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-200 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
-              Budget activity
+          {/* Activity list */}
+          <Card className="p-0 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+                  Activity
+                </div>
+                <h3 className="font-display text-[17px] text-slate-900 mt-0.5">
+                  Plans &amp; spending
+                </h3>
+              </div>
+              <div className="w-8 h-8 rounded-xl bg-brand-50 grid place-items-center">
+                <Basket size={15} className="text-brand-600" />
+              </div>
             </div>
-            <h3 className="font-display text-[18px] text-slate-900 mt-0.5">
-              Plans and spending
-            </h3>
-          </div>
-          <Basket size={22} className="text-brand-500" />
-        </div>
-        {loading ? (
-          <div className="p-8 text-[14px] text-slate-500">
-            Loading budget logs...
-          </div>
-        ) : logs.length === 0 ? (
-          <div className="p-8 text-center text-[14px] text-slate-500">
-            No budget logs yet.
-          </div>
-        ) : (
-          <ul className="divide-y divide-slate-100">
-            {logs.map((log) => (
-              <li
-                key={log.id}
-                className="px-5 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4"
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-[14px] text-slate-900">
-                    {log.title}
-                  </div>
-                  <div className="text-[12px] text-slate-500 mt-0.5 break-words">
-                    {log.entryType} ·{" "}
-                    {new Date(
-                      log.spentAt ?? log.plannedFor ?? log.createdAt,
-                    ).toLocaleDateString()}
-                    {Array.isArray(log.items) && log.items.length
-                      ? ` · ${log.items
-                          .map((item) =>
-                            typeof item === "object"
-                              ? `${item.name}${item.amount != null ? ` (${log.currency} ${Number(item.amount).toFixed(0)})` : ""}`
-                              : String(item),
-                          )
-                          .join(", ")}`
-                      : ""}
-                  </div>
+
+            {loading ? (
+              <div className="p-8 flex items-center gap-2 text-[13px] text-slate-400">
+                <ArrowsClockwise size={14} className="animate-spin" /> Loading…
+              </div>
+            ) : logs.length === 0 ? (
+              <div className="p-10 text-center">
+                <div className="w-10 h-10 rounded-2xl bg-brand-50 ring-1 ring-brand-100 grid place-items-center mx-auto mb-3">
+                  <Basket size={18} className="text-brand-500" />
                 </div>
-                <div className="flex items-center justify-between gap-3 sm:justify-end">
-                  <div className="font-mono text-[13px] text-slate-900">
-                    {log.currency} {Number(log.amount).toFixed(0)}
-                  </div>
-                  <button
-                    onClick={() => deleteLog(log.id)}
-                    disabled={deletingId === log.id}
-                    title={deletingId === log.id ? "Deleting..." : "Delete log"}
-                    aria-label={
-                      deletingId === log.id ? "Deleting log" : "Delete log"
-                    }
-                    className="w-8 h-8 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 grid place-items-center transition"
+                <div className="font-display text-[16px] text-slate-800 mb-1">
+                  No logs yet
+                </div>
+                <p className="text-[12px] text-slate-400">
+                  Add your first grocery plan or spending above.
+                </p>
+              </div>
+            ) : (
+              <ul className="divide-y divide-slate-100">
+                {logs.map((log) => (
+                  <li
+                    key={log.id}
+                    className="group px-5 py-3.5 flex items-center gap-3"
                   >
-                    {deletingId === log.id ? (
-                      <span className="h-3.5 w-3.5 rounded-full border-2 border-slate-300 border-t-red-500 animate-spin" />
-                    ) : (
-                      <Trash size={14} />
-                    )}
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
+                    <div className="w-8 h-8 rounded-xl bg-brand-50 ring-1 ring-brand-100 grid place-items-center shrink-0">
+                      <Basket size={14} className="text-brand-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[13px] font-medium text-slate-900 truncate">
+                        {log.title}
+                      </div>
+                      <div className="text-[11px] text-slate-400 truncate mt-0.5">
+                        {new Date(
+                          log.spentAt ?? log.plannedFor ?? log.createdAt,
+                        ).toLocaleDateString()}
+                        {Array.isArray(log.items) && log.items.length > 0
+                          ? " · " +
+                            log.items
+                              .slice(0, 3)
+                              .map((item) =>
+                                typeof item === "object"
+                                  ? item.name
+                                  : String(item),
+                              )
+                              .join(", ") +
+                            (log.items.length > 3
+                              ? ` +${log.items.length - 3}`
+                              : "")
+                          : ""}
+                      </div>
+                    </div>
+                    <div className="shrink-0 flex items-center gap-2">
+                      <span
+                        className={`text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full ring-1 ${
+                          log.entryType === "spent"
+                            ? "bg-amber-50 text-amber-700 ring-amber-100"
+                            : "bg-slate-100 text-slate-500 ring-slate-200"
+                        }`}
+                      >
+                        {log.entryType}
+                      </span>
+                      <span className="font-mono text-[13px] font-semibold text-slate-900 min-w-[60px] text-right">
+                        {log.currency} {Number(log.amount).toFixed(0)}
+                      </span>
+                      <button
+                        onClick={() => deleteLog(log.id)}
+                        disabled={deletingId === log.id}
+                        title="Delete"
+                        className="w-7 h-7 rounded-lg text-slate-300 hover:bg-red-50 hover:text-red-500 disabled:opacity-50 grid place-items-center transition sm:opacity-0 sm:group-hover:opacity-100"
+                      >
+                        {deletingId === log.id ? (
+                          <span className="h-3 w-3 rounded-full border-2 border-slate-200 border-t-red-400 animate-spin" />
+                        ) : (
+                          <Trash size={13} />
+                        )}
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

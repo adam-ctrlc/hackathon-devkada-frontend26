@@ -21,6 +21,7 @@ import {
 import { setAuthSession } from "../lib/auth-session.js";
 import { AppFooter } from "../components/AppFooter.jsx";
 import { usePageTitle } from "../hooks/usePageTitle.js";
+import { RegisterProfileStep } from "./RegisterProfileStep.jsx";
 
 const slugify = (str) =>
   str
@@ -76,6 +77,9 @@ export default function Register() {
   const [verifyLoading, setVerifyLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendMessage, setResendMessage] = useState("");
+
+  // Profile step
+  const [profileStep, setProfileStep] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -134,7 +138,7 @@ export default function Register() {
         setVerifyEmail(response.email);
       } else {
         setAuthSession(response);
-        navigate("/u/dashboard");
+        setProfileStep({ profileId: response.profile?.id ?? "" });
       }
     } catch (err) {
       setApiError(err);
@@ -161,7 +165,7 @@ export default function Register() {
         body: { email: verifyEmail, code: verifyCode.trim() },
       });
       setAuthSession(response);
-      navigate("/u/dashboard");
+      setProfileStep({ profileId: response.profile?.id ?? "" });
     } catch (err) {
       setVerifyError(formatApiError(err));
     } finally {
@@ -192,7 +196,26 @@ export default function Register() {
   const lastNameError = getApiFieldError(apiError, "lastName");
   const passwordError = getApiFieldError(apiError, "password");
 
-  usePageTitle(verifyEmail ? "Verify email" : "Create account");
+  usePageTitle(
+    profileStep
+      ? "Set up profile"
+      : verifyEmail
+        ? "Verify email"
+        : "Create account",
+  );
+
+  if (profileStep) {
+    return (
+      <RegisterProfileStep
+        profileId={profileStep.profileId}
+        firstName={firstName}
+        lastName={lastName}
+        email={email}
+        onSaved={() => navigate("/u/dashboard")}
+        onSkip={() => navigate("/u/dashboard")}
+      />
+    );
+  }
 
   if (verifyEmail) {
     return (

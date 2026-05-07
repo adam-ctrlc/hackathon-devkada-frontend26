@@ -17,13 +17,42 @@ import Register from "./pages/Register.jsx";
 import Landing from "./pages/Landing.jsx";
 import Terms from "./pages/Terms.jsx";
 import Privacy from "./pages/Privacy.jsx";
+import { getAuthSession } from "./lib/auth-session.js";
+
+function PublicRoute({ children }) {
+  const session = getAuthSession();
+  if (session?.tokens?.accessToken)
+    return <Navigate to="/u/dashboard" replace />;
+  return children;
+}
 
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<Login />} />
-      <Route path="/landing" element={<Landing />} />
-      <Route path="/register" element={<Register />} />
+      <Route
+        path="/"
+        element={
+          <PublicRoute>
+            <Login />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/landing"
+        element={
+          <PublicRoute>
+            <Landing />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          <PublicRoute>
+            <Register />
+          </PublicRoute>
+        }
+      />
       <Route path="/terms" element={<Terms />} />
       <Route path="/privacy" element={<Privacy />} />
       <Route path="/u" element={<UserLayout />}>

@@ -44,7 +44,7 @@ const NAV = [
     group: "Trends",
     items: [
       { id: "calendar", label: "Health Calendar", Icon: CalendarBlank },
-      { id: "insights", label: "Weekly Insights", Icon: Sparkle, badge: "New" },
+      { id: "insights", label: "Weekly Insights", Icon: Sparkle },
       { id: "history", label: "Scan History", Icon: Clock },
     ],
   },

@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { Outlet, useNavigate, useLocation, Navigate } from "react-router-dom";
 import { Sidebar } from "../../components/Sidebar.jsx";
 import { Barcode, List } from "@phosphor-icons/react";
+import { getAuthSession } from "../../lib/auth-session.js";
 
 const LABELS = {
   dashboard: "Dashboard",
@@ -22,6 +23,9 @@ export default function UserLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const session = getAuthSession();
+  if (!session?.tokens?.accessToken) return <Navigate to="/" replace />;
   const segment = location.pathname.split("/").pop();
   const label = LABELS[segment] ?? "KainWise";
 

@@ -493,82 +493,91 @@ export default function Profile() {
         {/* Left sidebar */}
         <div className="lg:col-span-4 space-y-5">
           {/* Avatar + stats */}
-          <Card className="p-6">
-            <div className="flex items-center gap-4">
+          <Card className="p-5">
+            <div className="flex items-center gap-3 mb-4">
               <button
                 onClick={() => setShowAvatar(true)}
-                className="w-16 h-16 rounded-full bg-brand-100 grid place-items-center font-display text-[22px] text-brand-700 hover:bg-brand-200 transition relative group shrink-0"
+                className="w-14 h-14 rounded-2xl bg-brand-100 grid place-items-center font-display text-[20px] text-brand-700 hover:bg-brand-200 transition relative group shrink-0"
               >
                 {initials}
-                <span className="absolute inset-0 rounded-full bg-black/20 opacity-0 group-hover:opacity-100 transition grid place-items-center text-white">
-                  <PencilSimple size={16} />
+                <span className="absolute inset-0 rounded-2xl bg-black/20 opacity-0 group-hover:opacity-100 transition grid place-items-center text-white">
+                  <PencilSimple size={14} />
                 </span>
               </button>
-              <div className="min-w-0">
-                <div className="font-display text-[20px] leading-tight text-slate-900 truncate">
+              <div className="min-w-0 flex-1">
+                <div className="font-display text-[17px] leading-tight text-slate-900 truncate">
                   {form.firstName}{" "}
                   {form.middleName ? form.middleName[0] + ". " : ""}
                   {form.lastName}
                 </div>
-                <div className="text-[12px] text-slate-500">
-                  {form.sex === "FEMALE" ? "Female" : "Male"} · {form.age} ·{" "}
-                  {form.email}
+                <div className="text-[12px] text-slate-500 mt-0.5">
+                  {form.sex === "FEMALE"
+                    ? "Female"
+                    : form.sex === "MALE"
+                      ? "Male"
+                      : "—"}
+                  {form.age ? ` · ${form.age} yrs` : ""}
                 </div>
               </div>
             </div>
 
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
-              {[
-                {
-                  label: "BMI",
-                  value: bmi.toString(),
-                  sub: bmiLabel,
-                  subColor: bmiColor,
-                },
-                {
-                  label: "kcal/day",
-                  value: (metrics?.calorieTarget ?? 0).toLocaleString(),
-                  sub: "target",
-                  subColor: "text-slate-500",
-                },
-                {
-                  label: "Protein",
-                  value: `${Math.max(1, Math.round((form.weightKg || 60) * 1.2))}g`,
-                  sub: "daily",
-                  subColor: "text-slate-500",
-                },
-              ].map((s) => (
-                <div
-                  key={s.label}
-                  className="rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200"
-                >
-                  <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
-                    {s.label}
-                  </div>
-                  <div className="font-display text-[20px] text-slate-900">
-                    {s.value}
-                  </div>
-                  <div className={`text-[10px] font-medium ${s.subColor}`}>
-                    {s.sub}
-                  </div>
+            <div className="h-px bg-slate-100 mb-4" />
+
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              <div className="rounded-xl bg-slate-50 ring-1 ring-slate-100 px-3 py-2.5">
+                <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-0.5">
+                  BMI
                 </div>
-              ))}
+                <div className="font-display text-[20px] leading-none text-slate-900">
+                  {bmi || "—"}
+                </div>
+                <div className={`text-[10px] font-semibold mt-1 ${bmiColor}`}>
+                  {bmi ? bmiLabel : "—"}
+                </div>
+              </div>
+              <div className="rounded-xl bg-slate-50 ring-1 ring-slate-100 px-3 py-2.5">
+                <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-0.5">
+                  kcal/day
+                </div>
+                <div className="font-display text-[20px] leading-none text-slate-900">
+                  {(metrics?.calorieTarget ?? 0).toLocaleString()}
+                </div>
+                <div className="text-[10px] font-medium text-slate-500 mt-1">
+                  target
+                </div>
+              </div>
+              <div className="rounded-xl bg-slate-50 ring-1 ring-slate-100 px-3 py-2.5">
+                <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold mb-0.5">
+                  Protein
+                </div>
+                <div className="font-display text-[20px] leading-none text-slate-900">
+                  {Math.max(1, Math.round((form.weightKg || 60) * 1.2))}g
+                </div>
+                <div className="text-[10px] font-medium text-slate-500 mt-1">
+                  daily
+                </div>
+              </div>
             </div>
-            <p className="text-[11px] text-slate-500 leading-relaxed mt-4">
-              BMI and calorie targets are general estimates. Consult your doctor
-              for medical advice.
+
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              Estimates only — consult your doctor for medical advice.
             </p>
           </Card>
 
           {/* Allergies */}
           <Card className="p-5">
             <div className="flex items-center justify-between gap-2 mb-3">
-              <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
-                <Heart size={12} /> Allergies
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-red-50 grid place-items-center">
+                  <Heart size={12} className="text-red-500" />
+                </div>
+                <span className="text-[11px] uppercase tracking-wider text-slate-600 font-semibold">
+                  Allergies
+                </span>
               </div>
               {form.allergies.length > 0 && (
                 <span className="text-[10px] text-brand-600 flex items-center gap-1 font-medium">
-                  <Sparkle size={9} weight="fill" /> AI will validate on save
+                  <Sparkle size={9} weight="fill" /> AI validates on save
                 </span>
               )}
             </div>
@@ -595,12 +604,17 @@ export default function Profile() {
           {/* Diet restrictions */}
           <Card className="p-5">
             <div className="flex items-center justify-between gap-2 mb-3">
-              <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
-                <Scales size={12} /> Diet restrictions
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-amber-50 grid place-items-center">
+                  <Scales size={12} className="text-amber-500" />
+                </div>
+                <span className="text-[11px] uppercase tracking-wider text-slate-600 font-semibold">
+                  Diet restrictions
+                </span>
               </div>
               {form.dietRestrictions.length > 0 && (
                 <span className="text-[10px] text-brand-600 flex items-center gap-1 font-medium">
-                  <Sparkle size={9} weight="fill" /> AI will validate on save
+                  <Sparkle size={9} weight="fill" /> AI validates on save
                 </span>
               )}
             </div>
@@ -626,8 +640,13 @@ export default function Profile() {
 
           {/* Budget */}
           <Card className="p-5">
-            <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-3">
-              <CurrencyCircleDollar size={12} /> Food budget
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-6 h-6 rounded-lg bg-emerald-50 grid place-items-center">
+                <CurrencyCircleDollar size={12} className="text-emerald-600" />
+              </div>
+              <span className="text-[11px] uppercase tracking-wider text-slate-600 font-semibold">
+                Food budget
+              </span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
               <Field label="Amount">
@@ -664,19 +683,29 @@ export default function Profile() {
 
           {/* Security */}
           <Card className="p-5">
-            <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-3">
-              <Lock size={12} /> Security
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-6 h-6 rounded-lg bg-slate-100 grid place-items-center">
+                <Lock size={12} className="text-slate-500" />
+              </div>
+              <span className="text-[11px] uppercase tracking-wider text-slate-600 font-semibold">
+                Security
+              </span>
             </div>
-            <div className="mb-2 text-[12px] text-slate-500">
-              {loadedProfile?.diaryLocked
-                ? "A PIN is protecting your diary."
-                : "No diary PIN is set yet."}
+            <div className="flex items-center gap-2 mb-3">
+              <div
+                className={`w-1.5 h-1.5 rounded-full ${loadedProfile?.diaryLocked ? "bg-emerald-500" : "bg-slate-300"}`}
+              />
+              <span className="text-[12px] text-slate-500">
+                {loadedProfile?.diaryLocked
+                  ? "Diary is PIN-protected"
+                  : "No diary PIN set"}
+              </span>
             </div>
             <button
               onClick={() => setShowPin(true)}
-              className="w-full h-10 rounded-lg bg-slate-50 ring-1 ring-slate-200 text-[13px] text-slate-700 font-medium hover:bg-slate-100 transition flex items-center gap-2 px-3"
+              className="w-full h-9 rounded-lg bg-slate-50 ring-1 ring-slate-200 text-[12px] text-slate-600 font-medium hover:bg-slate-100 transition flex items-center gap-2 px-3"
             >
-              <Lock size={14} className="text-slate-400" />{" "}
+              <Lock size={13} className="text-slate-400" />
               {loadedProfile?.diaryLocked
                 ? "Change diary PIN"
                 : "Create diary PIN"}
@@ -687,8 +716,13 @@ export default function Profile() {
         {/* Main form */}
         <Card className="lg:col-span-8 p-6">
           {/* Personal info */}
-          <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-4">
-            <User size={12} /> Personal information
+          <div className="flex items-center gap-2.5 mb-5">
+            <div className="w-7 h-7 rounded-lg bg-brand-50 grid place-items-center">
+              <User size={14} className="text-brand-600" />
+            </div>
+            <span className="font-semibold text-[13px] text-slate-800">
+              Personal information
+            </span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <Field label="First name">
@@ -739,9 +773,14 @@ export default function Profile() {
           </div>
 
           {/* Body metrics */}
-          <div className="h-px bg-slate-100 mb-6" />
-          <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-4">
-            <Scales size={12} /> Body metrics
+          <div className="h-px bg-slate-100 my-6" />
+          <div className="flex items-center gap-2.5 mb-5">
+            <div className="w-7 h-7 rounded-lg bg-amber-50 grid place-items-center">
+              <Scales size={14} className="text-amber-500" />
+            </div>
+            <span className="font-semibold text-[13px] text-slate-800">
+              Body metrics
+            </span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             <Field label="Height" hint="cm">
@@ -790,9 +829,14 @@ export default function Profile() {
           </div>
 
           {/* Health goal */}
-          <div className="h-px bg-slate-100 mb-6" />
-          <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-3">
-            Health goal
+          <div className="h-px bg-slate-100 my-6" />
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="w-7 h-7 rounded-lg bg-emerald-50 grid place-items-center">
+              <Heart size={14} className="text-emerald-600" />
+            </div>
+            <span className="font-semibold text-[13px] text-slate-800">
+              Health goal
+            </span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-6">
             {HEALTH_GOALS.map((g) => (
@@ -811,14 +855,19 @@ export default function Profile() {
           </div>
 
           {/* Food preferences */}
-          <div className="h-px bg-slate-100 mb-6" />
-          <div className="flex items-center justify-between gap-2 mb-3">
-            <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
-              Food preferences
+          <div className="h-px bg-slate-100 my-6" />
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-brand-50 grid place-items-center">
+                <Sparkle size={14} className="text-brand-500" weight="fill" />
+              </div>
+              <span className="font-semibold text-[13px] text-slate-800">
+                Food preferences
+              </span>
             </div>
             {form.foodPreferences.length > 0 && (
               <span className="text-[10px] text-brand-600 flex items-center gap-1 font-medium">
-                <Sparkle size={9} weight="fill" /> AI will validate on save
+                <Sparkle size={9} weight="fill" /> AI validates on save
               </span>
             )}
           </div>

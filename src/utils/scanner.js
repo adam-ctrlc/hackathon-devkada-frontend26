@@ -274,6 +274,26 @@ export const normalizeFlags = (notes = []) =>
     })
     .filter((note) => note.label);
 
+export function normalizeIngredients(raw) {
+  if (Array.isArray(raw) && raw.length > 0) {
+    return raw
+      .filter((item) => item && typeof item === "object" && item.name)
+      .map((item) => ({
+        name: String(item.name).trim(),
+        note: item.note ? String(item.note).trim() : null,
+        concern: item.concern ?? "none",
+      }));
+  }
+  if (typeof raw === "string" && raw.trim()) {
+    return raw
+      .split(/,\s*|\n/)
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .map((name) => ({ name, note: null, concern: "none" }));
+  }
+  return [];
+}
+
 export function buildResult(raw, scans = [], targets = buildProfileTargets()) {
   if (!raw) return null;
   const avgScore = scans.length
@@ -353,10 +373,9 @@ export function buildResult(raw, scans = [], targets = buildProfileTargets()) {
     ],
     flags: normalizeFlags(raw.notes),
     allergens: raw.allergens ?? [],
-    ingredients:
-      raw.ingredients ??
-      raw.aiAnalysis?.ingredients ??
-      "The exact recipe is not public, so KainWise could not infer the ingredient list yet.",
+    ingredients: normalizeIngredients(
+      raw.aiAnalysis?.ingredients ?? raw.ingredients,
+    ),
     wellnessImpact: raw.wellnessImpact ?? "",
     supportLevel: raw.supportLevel,
     estimatedPricePhp: raw.estimatedPricePhp ?? null,

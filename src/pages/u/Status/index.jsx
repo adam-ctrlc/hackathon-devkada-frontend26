@@ -285,7 +285,7 @@ export default function Status() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Status grid */}
         <div className="lg:col-span-8 space-y-5">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {visibleStatusOptions.map((s) => {
               const isActive = selected === s.id;
               const isSaved = savedStatus === s.id;
@@ -296,36 +296,52 @@ export default function Status() {
                   key={s.id}
                   onClick={() => pick(s.id)}
                   disabled={isBlocked}
-                  title={blockReason || s.description}
-                  className={`flex items-center gap-3 h-14 px-4 rounded-xl text-left text-[13.5px] font-medium ring-1 transition relative
+                  title={blockReason || undefined}
+                  className={`relative flex flex-col gap-2.5 p-4 rounded-xl text-left ring-1 transition
                     ${
                       isActive
-                        ? "bg-brand-600 text-white ring-brand-600 shadow-sm"
+                        ? "bg-brand-600 ring-brand-600 shadow-md"
                         : isBlocked
-                          ? "bg-slate-50 text-slate-400 ring-slate-200 cursor-not-allowed opacity-70"
-                          : "bg-white text-slate-700 ring-slate-200 hover:bg-slate-50"
+                          ? "bg-slate-50 ring-slate-100 cursor-not-allowed opacity-50"
+                          : "bg-white ring-slate-200 hover:ring-brand-300 hover:shadow-sm"
                     }`}
                 >
-                  <s.icon
-                    size={16}
-                    className={
-                      isActive
-                        ? "text-white shrink-0"
-                        : isBlocked
-                          ? "text-slate-300 shrink-0"
-                          : "text-slate-400 shrink-0"
-                    }
-                  />
-                  <span className="leading-tight truncate">
-                    {s.label}
-                    {isBlocked && (
-                      <span className="block text-[10px] font-normal text-slate-400">
-                        Not applicable
-                      </span>
+                  <div
+                    className={`w-9 h-9 rounded-xl grid place-items-center shrink-0
+                    ${isActive ? "bg-white/20" : isBlocked ? "bg-slate-100" : "bg-brand-50"}`}
+                  >
+                    <s.icon
+                      size={18}
+                      className={
+                        isActive
+                          ? "text-white"
+                          : isBlocked
+                            ? "text-slate-300"
+                            : "text-brand-500"
+                      }
+                    />
+                  </div>
+                  <div>
+                    <div
+                      className={`text-[13px] font-semibold leading-tight ${isActive ? "text-white" : isBlocked ? "text-slate-400" : "text-slate-800"}`}
+                    >
+                      {s.label}
+                    </div>
+                    {!isBlocked && (
+                      <div
+                        className={`text-[11px] mt-0.5 leading-snug line-clamp-2 ${isActive ? "text-white/70" : "text-slate-500"}`}
+                      >
+                        {s.description}
+                      </div>
                     )}
-                  </span>
+                    {isBlocked && (
+                      <div className="text-[10px] text-slate-400 mt-0.5">
+                        Not applicable
+                      </div>
+                    )}
+                  </div>
                   {isSaved && !isActive && (
-                    <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-brand-500" />
+                    <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-brand-500 ring-2 ring-white" />
                   )}
                 </button>
               );
@@ -333,8 +349,16 @@ export default function Status() {
           </div>
 
           {/* Notes */}
-          <Card className="p-5 space-y-4">
-            <Field label="Personal notes (visible to AI only)">
+          <Card className="p-5 space-y-5">
+            <div>
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <label className="text-[12px] font-semibold text-slate-700">
+                  Personal notes
+                </label>
+                <span className="text-[10px] text-slate-400 font-medium">
+                  Visible to AI only
+                </span>
+              </div>
               <textarea
                 value={notes}
                 onChange={(e) => {
@@ -343,23 +367,32 @@ export default function Status() {
                 }}
                 rows={3}
                 disabled={refining}
-                placeholder="e.g. i am allergy to milk, day 12 of recovery"
-                className="w-full px-3.5 py-2.5 rounded-lg bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-brand-500 outline-none text-[14px] resize-none disabled:opacity-60 disabled:cursor-wait"
+                placeholder="e.g. allergic to milk, day 12 of recovery from surgery…"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 ring-1 ring-slate-200 focus:ring-2 focus:ring-brand-400 focus:bg-white outline-none text-[13px] resize-none transition disabled:opacity-60 disabled:cursor-wait"
               />
-              <div className="mt-1.5 flex flex-col gap-1">
-                {notes.trim() && (
-                  <p className="text-[11px] text-brand-600 flex items-center gap-1 font-medium">
-                    <Sparkle size={10} weight="fill" />
-                    AI will fix grammar and personalize this using your profile
-                    before saving
-                  </p>
-                )}
-                <p className="text-[11px] text-slate-500">
-                  Used to personalize AI food guidance and diary reflections.
+              {notes.trim() ? (
+                <p className="mt-1.5 text-[11px] text-brand-600 flex items-center gap-1 font-medium">
+                  <Sparkle size={10} weight="fill" />
+                  AI will refine grammar and add specificity before saving
                 </p>
+              ) : (
+                <p className="mt-1.5 text-[11px] text-slate-400">
+                  Used to personalize food guidance and diary reflections.
+                </p>
+              )}
+            </div>
+
+            <div className="h-px bg-slate-100" />
+
+            <div>
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <label className="text-[12px] font-semibold text-slate-700">
+                  Custom restriction or doctor's note
+                </label>
+                <span className="text-[10px] text-slate-400 font-medium">
+                  Private
+                </span>
               </div>
-            </Field>
-            <Field label="Custom restriction or doctor's note">
               <Input
                 value={customRestriction}
                 onChange={(e) => {
@@ -370,19 +403,17 @@ export default function Status() {
                 placeholder="e.g. Avoid raw vegetables until May 20"
                 className="disabled:opacity-60 disabled:cursor-wait"
               />
-              <div className="mt-1.5 flex flex-col gap-1">
-                {customRestriction.trim() && (
-                  <p className="text-[11px] text-brand-600 flex items-center gap-1 font-medium">
-                    <Sparkle size={10} weight="fill" />
-                    AI will rewrite this as a clear, specific restriction before
-                    saving
-                  </p>
-                )}
-                <p className="text-[11px] text-slate-500">
-                  Private. Only used to flag incompatible foods.
+              {customRestriction.trim() ? (
+                <p className="mt-1.5 text-[11px] text-brand-600 flex items-center gap-1 font-medium">
+                  <Sparkle size={10} weight="fill" />
+                  AI will rewrite this as a specific, actionable restriction
                 </p>
-              </div>
-            </Field>
+              ) : (
+                <p className="mt-1.5 text-[11px] text-slate-400">
+                  Only used to flag incompatible foods in scan results.
+                </p>
+              )}
+            </div>
           </Card>
         </div>
 

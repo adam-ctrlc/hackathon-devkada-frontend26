@@ -199,20 +199,20 @@ export default function Calendar() {
         />
       )}
 
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-7">
+      {/* Header */}
+      <div className="mb-5 sm:mb-7 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <div className="text-[11px] tracking-[0.18em] uppercase text-brand-600 font-semibold mb-2">
-            Health Impact Calendar
+            Health Calendar
           </div>
-          <h1 className="font-display text-[34px] leading-[1.05] tracking-tight text-slate-900">
+          <h1 className="font-display text-[26px] sm:text-[34px] leading-[1.05] tracking-tight text-slate-900">
             {MONTHS[month]} {year}
           </h1>
           <p className="text-slate-600 mt-2 max-w-[560px]">
-            Daily patterns from your food, meals, water, diary, budget, and
-            health status.
+            Daily patterns from food, water, sleep, diary, and budget.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 sm:mt-1 shrink-0">
           <button
             onClick={prevMonth}
             className="w-9 h-9 rounded-xl bg-white ring-1 ring-slate-200 grid place-items-center text-slate-600 hover:bg-slate-50 transition"
@@ -240,20 +240,48 @@ export default function Calendar() {
         <CalendarSkeleton />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          <Card className="lg:col-span-8 p-4 sm:p-6 overflow-hidden">
-            <div className="overflow-x-auto pb-2">
-              <div className="min-w-[520px]">
-                <div className="grid grid-cols-7 gap-2 text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-3">
+          {/* Calendar grid */}
+          <Card className="lg:col-span-8 p-4 sm:p-5 overflow-hidden">
+            <div className="overflow-x-auto">
+              <div className="min-w-[480px]">
+                <div className="grid grid-cols-7 mb-2">
                   {WEEKDAYS.map((weekday) => (
-                    <div key={weekday} className="text-center">
+                    <div
+                      key={weekday}
+                      className="text-center text-[10px] uppercase tracking-widest text-slate-400 font-semibold py-1.5"
+                    >
                       {weekday}
                     </div>
                   ))}
                 </div>
-                <div className="grid grid-cols-7 gap-2">
+                <div className="grid grid-cols-7 gap-1.5">
                   {cells.map((cell, index) => {
                     if (!cell) return <div key={index} />;
                     const isSelected = selectedCell?.key === cell.key;
+                    const cellBg =
+                      cell.level === "High"
+                        ? "bg-emerald-50"
+                        : cell.level === "Medium"
+                          ? "bg-amber-50"
+                          : cell.level === "Low"
+                            ? "bg-red-50"
+                            : "bg-white";
+                    const cellBorder =
+                      cell.level === "High"
+                        ? "border-emerald-100"
+                        : cell.level === "Medium"
+                          ? "border-amber-100"
+                          : cell.level === "Low"
+                            ? "border-red-100"
+                            : "border-slate-200";
+                    const scoreColor =
+                      cell.level === "High"
+                        ? "text-emerald-700"
+                        : cell.level === "Medium"
+                          ? "text-amber-700"
+                          : cell.level === "Low"
+                            ? "text-red-600"
+                            : "text-slate-400";
                     return (
                       <button
                         key={cell.key}
@@ -261,39 +289,51 @@ export default function Calendar() {
                           setSelectedCell(isSelected ? null : cell)
                         }
                         disabled={cell.isFuture}
-                        className={`relative aspect-square rounded-xl p-2 flex flex-col justify-between transition
-                      ${cell.isFuture ? "bg-slate-50 border border-slate-100 opacity-30 cursor-not-allowed" : isSelected || cell.isToday ? `ring-2 ${toneRing(cell.level)} bg-white border border-transparent shadow-sm` : "bg-slate-50 border border-slate-200 hover:bg-white hover:border-slate-300 hover:shadow-sm cursor-pointer"}`}
+                        className={`relative aspect-square rounded-xl p-1.5 flex flex-col justify-between transition
+                          ${
+                            cell.isFuture
+                              ? "bg-slate-50 border border-slate-100 opacity-25 cursor-not-allowed"
+                              : isSelected
+                                ? `ring-2 ring-brand-500 ring-offset-1 ${cellBg} border border-transparent shadow-sm`
+                                : cell.isToday
+                                  ? `ring-2 ring-brand-400 ${cellBg} border border-transparent shadow-sm`
+                                  : `${cellBg} border ${cellBorder} hover:shadow-sm hover:border-slate-300 cursor-pointer`
+                          }`}
                       >
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-start justify-between gap-0.5">
                           <span
-                            className={`font-mono text-[12px] tabular-nums ${cell.isToday ? "text-brand-700 font-semibold" : "text-slate-700"}`}
+                            className={`font-mono text-[11px] tabular-nums font-semibold leading-none ${cell.isToday ? "text-brand-700" : "text-slate-500"}`}
                           >
                             {cell.d}
                           </span>
                           {cell.isToday && (
-                            <span className="text-[9px] uppercase tracking-wider text-brand-700 font-semibold">
+                            <span className="text-[7px] uppercase tracking-wide text-brand-700 font-bold bg-brand-100 px-1 py-0.5 rounded leading-none">
                               today
                             </span>
                           )}
                         </div>
-                        <div className="space-y-1">
+                        <div className="flex-1 flex items-center justify-center">
+                          <span
+                            className={`font-display text-[17px] leading-none tabular-nums ${scoreColor}`}
+                          >
+                            {cell.score ?? ""}
+                          </span>
+                        </div>
+                        <div>
                           <div
-                            className={`h-1.5 rounded-full ${toneBar(cell.level)}`}
+                            className={`h-1 rounded-full ${toneBar(cell.level)}`}
                           />
-                          {(cell.summary?.budgetLogs?.length > 0 ||
-                            cell.summary?.foodEntryCount > 0) && (
-                            <div className="flex gap-1">
+                          {(cell.summary?.foodEntryCount > 0 ||
+                            cell.summary?.budgetLogs?.length > 0) && (
+                            <div className="flex gap-0.5 mt-0.5">
                               {cell.summary?.foodEntryCount > 0 && (
-                                <span className="h-1.5 w-1.5 rounded-full bg-brand-400" />
+                                <span className="h-1 w-1 rounded-full bg-brand-400" />
                               )}
                               {cell.summary?.budgetLogs?.length > 0 && (
-                                <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                                <span className="h-1 w-1 rounded-full bg-amber-400" />
                               )}
                             </div>
                           )}
-                          <div className="text-[10px] text-slate-500 font-mono tabular-nums">
-                            {cell.score ?? "--"}
-                          </div>
                         </div>
                       </button>
                     );
@@ -301,40 +341,51 @@ export default function Calendar() {
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-5 pt-5 mt-5 border-t border-slate-200 text-[12px] text-slate-600 flex-wrap">
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-1.5 rounded-full bg-emerald-400" /> High
-                support
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-1.5 rounded-full bg-amber-300" /> Medium
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-1.5 rounded-full bg-red-300" /> Low
-              </span>
-              <span className="w-full text-slate-500 sm:ml-auto sm:w-auto">
-                {calendarData?.streaks?.notice}
-              </span>
+            <div className="flex items-center gap-4 pt-4 mt-4 border-t border-slate-100 flex-wrap">
+              {[
+                { label: "High support", color: "bg-emerald-400" },
+                { label: "Medium", color: "bg-amber-300" },
+                { label: "Low", color: "bg-red-300" },
+              ].map(({ label, color }) => (
+                <span
+                  key={label}
+                  className="flex items-center gap-1.5 text-[12px] text-slate-500"
+                >
+                  <span className={`w-2.5 h-1 rounded-full ${color}`} /> {label}
+                </span>
+              ))}
+              {calendarData?.streaks?.notice && (
+                <span className="ml-auto text-[12px] text-slate-500 hidden sm:block">
+                  {calendarData.streaks.notice}
+                </span>
+              )}
             </div>
           </Card>
 
-          <div className="lg:col-span-4 space-y-5">
+          {/* Sidebar */}
+          <div className="lg:col-span-4 space-y-4">
+            {/* Week strip */}
             <Card className="p-5">
-              <div className="flex items-center justify-between mb-3">
-                <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
-                  {weekInfo.ongoing ? "This week so far" : "This week"}
+              <div className="flex items-center justify-between mb-1">
+                <div>
+                  <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+                    {weekInfo.ongoing ? "This week so far" : "This week"}
+                  </div>
+                  <h3 className="font-display text-[16px] mt-0.5 text-slate-900">
+                    Weekly rhythm
+                  </h3>
                 </div>
                 {weekInfo.ongoing && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-brand-50 text-brand-700">
-                    <span className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" />
-                    Ongoing
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 ring-1 ring-brand-100">
+                    <span className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" />{" "}
+                    Live
                   </span>
                 )}
               </div>
-              <p className="text-[13.5px] text-slate-700 leading-snug font-medium">
+              <p className="text-[12.5px] text-slate-600 leading-snug mb-3 mt-1">
                 {weekStatusCopy}
               </p>
-              <div className="mt-3 flex items-center gap-1.5">
+              <div className="flex items-center gap-1 mb-4">
                 {weekInfo.days.map((day) => {
                   const labels = ["M", "T", "W", "T", "F", "S", "S"];
                   const idx = (day.d.getDay() + 6) % 7;
@@ -350,118 +401,132 @@ export default function Calendar() {
                   return (
                     <div
                       key={day.key}
-                      className={`flex-1 h-12 rounded-lg flex flex-col items-center justify-center gap-0.5 ${tone} ${day.isToday ? "ring-2 ring-brand-500" : ""}`}
                       title={`${day.d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}${day.score != null ? ` · ${day.score}` : ""}`}
+                      className={`flex-1 h-11 rounded-lg flex flex-col items-center justify-center gap-0.5 ${tone} ${day.isToday ? "ring-2 ring-brand-500" : ""}`}
                     >
-                      <span className="text-[10px] font-semibold opacity-70">
+                      <span className="text-[9px] font-bold opacity-60">
                         {labels[idx]}
                       </span>
-                      <span className="text-[11px] font-mono tabular-nums">
+                      <span className="text-[11px] font-mono tabular-nums font-semibold">
                         {day.isFuture ? "·" : (day.score ?? "—")}
                       </span>
                     </div>
                   );
                 })}
               </div>
-              <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2 text-center">
-                <div className="rounded-lg bg-slate-50 p-2">
-                  <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
-                    Avg score
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { label: "Avg score", value: weekInfo.avgScore ?? "—" },
+                  { label: "Foods", value: weekInfo.foodCount },
+                  {
+                    label: "Water",
+                    value: `${(weekInfo.waterMl / 1000).toFixed(1)}L`,
+                  },
+                ].map((s) => (
+                  <div
+                    key={s.label}
+                    className="rounded-xl bg-slate-50 ring-1 ring-slate-100 px-2 py-2.5 text-center"
+                  >
+                    <div className="text-[9px] uppercase tracking-wider text-slate-400 font-semibold">
+                      {s.label}
+                    </div>
+                    <div className="font-display text-[17px] text-slate-900 mt-0.5 leading-none">
+                      {s.value}
+                    </div>
                   </div>
-                  <div className="font-display text-[18px] text-slate-900 mt-0.5 leading-none">
-                    {weekInfo.avgScore ?? "—"}
-                  </div>
-                </div>
-                <div className="rounded-lg bg-slate-50 p-2">
-                  <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
-                    Foods
-                  </div>
-                  <div className="font-display text-[18px] text-slate-900 mt-0.5 leading-none">
-                    {weekInfo.foodCount}
-                  </div>
-                </div>
-                <div className="rounded-lg bg-slate-50 p-2">
-                  <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
-                    Water
-                  </div>
-                  <div className="font-display text-[18px] text-slate-900 mt-0.5 leading-none">
-                    {(weekInfo.waterMl / 1000).toFixed(1)}
-                    <span className="text-[11px] text-slate-400 ml-0.5">L</span>
-                  </div>
-                </div>
+                ))}
               </div>
             </Card>
 
-            {(selectedCell ?? todayCell) && (
-              <Card className="p-5">
-                {(() => {
-                  const cell = selectedCell ?? todayCell;
-                  return (
-                    <>
-                      <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-3">
-                        {selectedCell
-                          ? `${MONTHS[month]} ${selectedCell.d}`
-                          : "Today"}
+            {/* Selected / today detail */}
+            {(selectedCell ?? todayCell) &&
+              (() => {
+                const cell = selectedCell ?? todayCell;
+                const ringTone =
+                  cell.level === "High"
+                    ? "green"
+                    : cell.level === "Low"
+                      ? "red"
+                      : "amber";
+                return (
+                  <Card className="p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+                          {selectedCell
+                            ? `${MONTHS[month]} ${selectedCell.d}`
+                            : "Today"}
+                        </div>
+                        <h3 className="font-display text-[16px] mt-0.5 text-slate-900">
+                          Day snapshot
+                        </h3>
                       </div>
-                      <div className="flex items-center gap-3 mb-3">
-                        <Ring
-                          value={cell.score ?? 0}
-                          size={84}
-                          stroke={8}
-                          tone={
-                            cell.level === "High"
-                              ? "green"
-                              : cell.level === "Low"
-                                ? "red"
-                                : "amber"
-                          }
-                          sub="score"
-                        />
-                        <div>
-                          <div className="flex flex-wrap items-center gap-1.5">
+                      {selectedCell && (
+                        <button
+                          onClick={() => setSelectedCell(null)}
+                          className="text-[11px] text-slate-400 hover:text-slate-600 transition"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 mb-3">
+                      <Ring
+                        value={cell.score ?? 0}
+                        size={76}
+                        stroke={7}
+                        tone={ringTone}
+                        sub="score"
+                      />
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+                          <Pill
+                            tone={pillTone(cell.level)}
+                            className="!normal-case !tracking-normal"
+                          >
+                            {cell.level} support
+                          </Pill>
+                          {cell.derived && (
                             <Pill
-                              tone={pillTone(cell.level)}
+                              tone="slate"
                               className="!normal-case !tracking-normal"
                             >
-                              {cell.level} support
+                              Estimated
                             </Pill>
-                            {cell.derived && (
-                              <Pill
-                                tone="slate"
-                                className="!normal-case !tracking-normal"
-                              >
-                                Estimated
-                              </Pill>
-                            )}
-                          </div>
-                          <div className="font-display text-[15px] mt-1.5 leading-tight text-slate-900">
-                            {summaryItemText(cell.summary?.highlights?.[0]) ||
-                              "No detailed log"}
-                          </div>
+                          )}
+                        </div>
+                        <div className="text-[13px] font-medium leading-snug text-slate-900">
+                          {summaryItemText(cell.summary?.highlights?.[0]) ||
+                            "No detailed log"}
                         </div>
                       </div>
-                      <p className="text-[13px] text-slate-600 leading-snug">
-                        {summaryItemText(cell.summary?.suggestions?.[0]) ||
-                          "Click any day to see the food, water, budget, and timing details."}
-                      </p>
-                    </>
-                  );
-                })()}
-              </Card>
-            )}
+                    </div>
+                    <p className="text-[12.5px] text-slate-500 leading-snug">
+                      {summaryItemText(cell.summary?.suggestions?.[0]) ||
+                        "Click any day to see food, water, budget, and timing details."}
+                    </p>
+                  </Card>
+                );
+              })()}
 
+            {/* Month at a glance */}
             <Card className="p-5">
-              <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-3">
-                Month at a glance
+              <div className="mb-1">
+                <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+                  Month
+                </div>
+                <h3 className="font-display text-[16px] mt-0.5 text-slate-900">
+                  At a glance
+                </h3>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-3 mt-3">
                 {stats.map((stat) => (
                   <div key={stat.l}>
                     <div className="flex items-baseline justify-between mb-1">
-                      <span className="text-[13px] text-slate-900">
+                      <span className="text-[12.5px] text-slate-700">
                         {stat.l}
                       </span>
-                      <span className="font-mono text-[12px] text-slate-500 tabular-nums">
+                      <span className="font-mono text-[11px] text-slate-400 tabular-nums">
                         {stat.v}d · {stat.pct}%
                       </span>
                     </div>
@@ -471,28 +536,41 @@ export default function Calendar() {
               </div>
             </Card>
 
-            <Card className="p-5 !bg-brand-50 !border-brand-100">
-              <div className="text-[11px] uppercase tracking-wider text-brand-700 font-semibold mb-1">
-                Best recorded day
+            {/* Best recorded day */}
+            <Card className="p-5">
+              <div className="mb-3">
+                <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+                  All time
+                </div>
+                <h3 className="font-display text-[16px] mt-0.5 text-slate-900">
+                  Best recorded day
+                </h3>
               </div>
               {bestSummary ? (
-                <>
-                  <div className="font-display text-[18px] mb-2 text-slate-900">
-                    {new Date(bestSummary.date).toLocaleDateString()} · Score{" "}
-                    {bestSummary.score}
+                <div className="rounded-xl bg-emerald-50 ring-1 ring-emerald-100 p-3">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[12px] text-emerald-800 font-medium">
+                      {new Date(bestSummary.date).toLocaleDateString(
+                        undefined,
+                        { month: "short", day: "numeric", year: "numeric" },
+                      )}
+                    </span>
+                    <span className="font-display text-[18px] text-emerald-700 leading-none">
+                      {bestSummary.score}
+                    </span>
                   </div>
-                  <p className="text-[13px] text-slate-700">
+                  <p className="text-[12px] text-slate-600 leading-snug">
                     {bestSummary.highlights
                       ?.map(summaryItemText)
                       .filter(Boolean)
                       .join(", ") || "Daily details available."}
                   </p>
-                </>
+                </div>
               ) : (
-                <div className="flex items-start gap-2 text-[13px] text-slate-700">
+                <div className="flex items-start gap-2 text-[13px] text-slate-500 rounded-xl bg-slate-50 ring-1 ring-slate-100 p-3">
                   <Sparkle
                     size={14}
-                    className="text-brand-600 shrink-0 mt-0.5"
+                    className="text-brand-500 shrink-0 mt-0.5"
                   />
                   Log meals, scans, diary, or water to generate calendar
                   summaries.

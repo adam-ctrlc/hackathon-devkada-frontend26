@@ -7,6 +7,7 @@ const buildScannerProfileContext = (profile = {}, targets = {}) => ({
   weightKg: profile.weightKg ?? null,
   activityLevel: profile.activityLevel ?? null,
   healthGoal: profile.healthGoal ?? null,
+  dietPattern: profile.dietPattern ?? null,
   allergies: profile.allergies ?? [],
   foodPreferences: profile.foodPreferences ?? [],
   dietRestrictions: profile.dietRestrictions ?? [],
@@ -54,7 +55,7 @@ Return JSON only with this exact shape:
   "productName": "string",
   "correction": {"originalInput": "string", "correctedInput": "string", "confidence": "Low" | "Medium" | "High"},
   "foodType": "string",
-  "ingredients": "string",
+  "ingredients": [{"name":"string","note":"string or null","concern":"none|allergen|additive|high-sodium|high-sugar|high-fat|preservative"}],
   "nutrition": {
     "calories": number,
     "sugarGrams": number,
@@ -84,8 +85,10 @@ Writing rules:
 - Expand descriptions with useful context. Example: instead of "Deep-fried battered quail eggs, a popular Filipino street food," explain that kwek-kwek is quail egg coated in orange batter and deep-fried, that frying raises fat/calorie density, and that sauces can add sodium/sugar.
 - Mention exact estimated nutrient values from your returned nutrition when relevant.
 - Keep each sentence concise, but make it specific.
-- Always return an "ingredients" string.
-- If the product or meal is common enough to infer its usual ingredients, list the likely ingredients clearly.
-- If brand-specific or proprietary ingredients are not public, say that the exact recipe is not public and then list the most likely or typical ingredients instead.
-- Do not leave ingredients blank and do not return generic placeholders like "unknown".`;
+- Always return "ingredients" as an array of objects with name, note, and concern.
+- List every distinct ingredient or component you can identify or infer. Aim for at least 4–8 items for any real food.
+- For each ingredient, set "note" to a short phrase explaining its role or nutritional impact (e.g. "main protein", "adds sodium", "natural sweetener", "binding agent"). Never leave note null for key ingredients.
+- Set "concern" to one of: "none", "allergen", "additive", "high-sodium", "high-sugar", "high-fat", "preservative". Use "allergen" for common allergens (gluten, dairy, shellfish, nuts, soy, eggs). Use "additive" for artificial colors, flavor enhancers (e.g. MSG), or artificial preservatives.
+- If the exact recipe is proprietary, list the most likely or typical ingredients based on the food type — never return an empty array.
+- Do not return vague entries like "other ingredients" or "spices" as a single catch-all — name them individually when possible.`;
 };

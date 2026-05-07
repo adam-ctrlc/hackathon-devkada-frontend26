@@ -814,125 +814,523 @@ export default function Scanner() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-5">
         <Card className="lg:col-span-7 p-0 overflow-hidden">
-          <div>
-            <div className="relative bg-slate-50 flex flex-col items-center justify-center gap-4 sm:gap-6 px-4 sm:px-8 py-6 sm:py-8 sm:aspect-[16/9]">
-              {scanning ? (
-                <div className="flex flex-col items-center gap-3">
-                  <div className="relative flex items-center justify-center">
-                    <Scan
-                      size={160}
-                      className="text-brand-300 animate-pulse"
-                      weight="light"
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Barcode
-                        size={64}
-                        className="text-brand-500"
-                        weight="light"
-                      />
-                    </div>
-                    <span className="absolute bottom-[38%] left-1/2 -translate-x-1/2 w-[72px] h-px bg-brand-500 shadow-[0_0_8px_2px_#3B82F6] animate-bounce" />
-                  </div>
-                  <span className="text-[13px] text-brand-600 font-medium animate-pulse">
-                    Scanning…
-                  </span>
-                </div>
-              ) : (
-                <div className="relative flex items-center justify-center">
-                  <Scan size={160} className="text-slate-200" weight="light" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Barcode
-                      size={64}
-                      className="text-brand-400"
-                      weight="light"
-                    />
-                  </div>
-                  <span className="absolute bottom-[38%] left-1/2 -translate-x-1/2 w-[72px] h-px bg-brand-500 shadow-[0_0_8px_2px_#3B82F6]" />
-                </div>
+          {/* Illustration */}
+          <div className="w-full bg-gradient-to-br from-slate-50 to-brand-50/30 border-b border-slate-100">
+            <svg
+              viewBox="0 0 560 190"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-full"
+            >
+              <defs>
+                <linearGradient
+                  id="scanBeam"
+                  x1="160"
+                  y1="0"
+                  x2="400"
+                  y2="0"
+                  gradientUnits="userSpaceOnUse"
+                >
+                  <stop offset="0%" stopColor="#3B82F6" stopOpacity="0" />
+                  <stop offset="30%" stopColor="#3B82F6" stopOpacity="0.85" />
+                  <stop offset="50%" stopColor="#60A5FA" stopOpacity="1" />
+                  <stop offset="70%" stopColor="#3B82F6" stopOpacity="0.85" />
+                  <stop offset="100%" stopColor="#3B82F6" stopOpacity="0" />
+                </linearGradient>
+                <linearGradient
+                  id="scanGlow"
+                  x1="160"
+                  y1="0"
+                  x2="400"
+                  y2="0"
+                  gradientUnits="userSpaceOnUse"
+                >
+                  <stop offset="0%" stopColor="#3B82F6" stopOpacity="0" />
+                  <stop offset="50%" stopColor="#93C5FD" stopOpacity="0.4" />
+                  <stop offset="100%" stopColor="#3B82F6" stopOpacity="0" />
+                </linearGradient>
+                <linearGradient
+                  id="bgFade"
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="190"
+                  gradientUnits="userSpaceOnUse"
+                >
+                  <stop offset="0%" stopColor="#F8FAFC" />
+                  <stop offset="100%" stopColor="#EFF6FF" stopOpacity="0.3" />
+                </linearGradient>
+              </defs>
+
+              {/* Subtle dot grid */}
+              {[
+                40, 80, 120, 160, 200, 240, 280, 320, 360, 400, 440, 480, 520,
+              ].flatMap((x) =>
+                [30, 70, 110, 150].map((y) => (
+                  <circle
+                    key={`${x}-${y}`}
+                    cx={x}
+                    cy={y}
+                    r="1.2"
+                    fill="#CBD5E1"
+                    opacity="0.5"
+                  />
+                )),
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-[520px]">
-                <button
-                  onClick={() => setCameraOpen(true)}
-                  disabled={scanning}
-                  className="h-11 rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-[13px] font-medium inline-flex items-center justify-center gap-2 transition"
-                >
-                  <Camera size={15} /> Open camera
-                </button>
-                <label
-                  className={`h-11 rounded-lg bg-white ring-1 ring-slate-200 text-slate-700 text-[13px] font-medium inline-flex items-center justify-center gap-2 transition cursor-pointer ${scanning ? "opacity-50 pointer-events-none" : "hover:bg-slate-100"}`}
-                >
-                  <input
-                    ref={fileRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={onFileChange}
-                  />
-                  <UploadSimple size={15} /> Upload barcode
-                </label>
-                <button
-                  onClick={openBudgetScanModal}
-                  disabled={scanning || loadingBudgetLogs || scanningBudgetLog}
-                  className="h-11 rounded-lg bg-white ring-1 ring-slate-200 text-slate-700 text-[13px] font-medium inline-flex items-center justify-center gap-2 transition hover:bg-brand-50 hover:text-brand-700 hover:ring-brand-100 disabled:opacity-50"
-                >
-                  <Basket size={15} />
-                  {loadingBudgetLogs || scanningBudgetLog
-                    ? "Loading..."
-                    : "Scan budget log"}
-                </button>
-                <button
-                  onClick={() => setShowManual(true)}
-                  disabled={scanning}
-                  className="h-11 rounded-lg bg-white ring-1 ring-slate-200 text-slate-700 text-[13px] font-medium inline-flex items-center justify-center gap-2 transition hover:bg-brand-50 hover:text-brand-700 hover:ring-brand-100 disabled:opacity-50"
-                >
-                  <Sparkle size={14} /> Type food manually
-                </button>
-              </div>
+              {/* ── LEFT CARD: Nutrition ── */}
+              <rect
+                x="22"
+                y="24"
+                width="108"
+                height="142"
+                rx="14"
+                fill="white"
+                stroke="#E2E8F0"
+                strokeWidth="1.5"
+              />
+              <rect x="34" y="36" width="48" height="6" rx="3" fill="#BFDBFE" />
+              <text
+                x="34"
+                y="70"
+                fontSize="26"
+                fontWeight="700"
+                fill="#0F172A"
+                fontFamily="system-ui"
+              >
+                248
+              </text>
+              <text
+                x="34"
+                y="82"
+                fontSize="8.5"
+                fill="#94A3B8"
+                fontFamily="system-ui"
+              >
+                kcal / serving
+              </text>
+              <line
+                x1="34"
+                y1="94"
+                x2="118"
+                y2="94"
+                stroke="#F1F5F9"
+                strokeWidth="1.5"
+              />
+              <text
+                x="34"
+                y="108"
+                fontSize="8"
+                fill="#64748B"
+                fontFamily="system-ui"
+              >
+                Protein
+              </text>
+              <text
+                x="118"
+                y="108"
+                fontSize="8"
+                fontWeight="600"
+                fill="#1E293B"
+                fontFamily="system-ui"
+                textAnchor="end"
+              >
+                12 g
+              </text>
+              <rect
+                x="34"
+                y="112"
+                width="84"
+                height="3"
+                rx="1.5"
+                fill="#F1F5F9"
+              />
+              <rect
+                x="34"
+                y="112"
+                width="38"
+                height="3"
+                rx="1.5"
+                fill="#818CF8"
+              />
+              <text
+                x="34"
+                y="127"
+                fontSize="8"
+                fill="#64748B"
+                fontFamily="system-ui"
+              >
+                Carbs
+              </text>
+              <text
+                x="118"
+                y="127"
+                fontSize="8"
+                fontWeight="600"
+                fill="#1E293B"
+                fontFamily="system-ui"
+                textAnchor="end"
+              >
+                35 g
+              </text>
+              <rect
+                x="34"
+                y="131"
+                width="84"
+                height="3"
+                rx="1.5"
+                fill="#F1F5F9"
+              />
+              <rect
+                x="34"
+                y="131"
+                width="60"
+                height="3"
+                rx="1.5"
+                fill="#FCD34D"
+              />
+              <text
+                x="34"
+                y="146"
+                fontSize="8"
+                fill="#64748B"
+                fontFamily="system-ui"
+              >
+                Fat
+              </text>
+              <text
+                x="118"
+                y="146"
+                fontSize="8"
+                fontWeight="600"
+                fill="#1E293B"
+                fontFamily="system-ui"
+                textAnchor="end"
+              >
+                8 g
+              </text>
+              <rect
+                x="34"
+                y="150"
+                width="84"
+                height="3"
+                rx="1.5"
+                fill="#F1F5F9"
+              />
+              <rect
+                x="34"
+                y="150"
+                width="22"
+                height="3"
+                rx="1.5"
+                fill="#FB923C"
+              />
 
-              <div className="w-full max-w-[520px] rounded-2xl bg-white/90 ring-1 ring-slate-200 p-3">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 mb-3">
-                  <div className="text-left">
-                    <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
-                      Meal timing
-                    </div>
-                    <div className="text-[12px] text-slate-500 mt-0.5">
-                      Used for calendar and insights.
-                    </div>
-                  </div>
-                  <input
-                    type="datetime-local"
-                    value={eatenAt}
-                    onChange={(event) =>
-                      handleEatenAtChange(event.target.value)
-                    }
-                    disabled={scanning}
-                    className="h-9 w-full sm:w-[210px] px-3 rounded-xl bg-slate-50 ring-1 ring-slate-200 text-[12.5px] text-slate-700 outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50"
+              {/* ── CENTER: Food bowl ── */}
+              {/* Plate shadow */}
+              <ellipse
+                cx="280"
+                cy="162"
+                rx="84"
+                ry="11"
+                fill="#CBD5E1"
+                opacity="0.5"
+              />
+              {/* Plate rim */}
+              <ellipse cx="280" cy="150" rx="84" ry="17" fill="#DBEAFE" />
+              {/* Bowl */}
+              <ellipse
+                cx="280"
+                cy="134"
+                rx="82"
+                ry="44"
+                fill="white"
+                stroke="#BFDBFE"
+                strokeWidth="2"
+              />
+              {/* Rice base */}
+              <ellipse cx="280" cy="126" rx="62" ry="29" fill="#FEF3C7" />
+              {/* Meat/protein */}
+              <rect
+                x="244"
+                y="103"
+                width="40"
+                height="26"
+                rx="9"
+                fill="#FED7AA"
+              />
+              <path
+                d="M244 116 Q264 108 284 113"
+                stroke="#FB923C"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                fill="none"
+              />
+              {/* Green veggies */}
+              <circle cx="325" cy="112" r="17" fill="#BBF7D0" />
+              <circle cx="319" cy="124" r="11" fill="#86EFAC" />
+              <circle cx="331" cy="123" r="8" fill="#4ADE80" />
+              {/* Red accent */}
+              <circle cx="255" cy="124" r="9" fill="#FCA5A5" />
+              <circle cx="260" cy="134" r="7" fill="#F87171" />
+              {/* Small garnish dots */}
+              <circle cx="294" cy="107" r="3.5" fill="#A3E635" />
+              <circle cx="302" cy="130" r="2.5" fill="#4ADE80" />
+              <circle cx="270" cy="130" r="3" fill="#FDE68A" />
+
+              {/* ── SCANNER CORNERS ── */}
+              <path
+                d="M162 62 L162 36 L188 36"
+                stroke="#2563EB"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M398 62 L398 36 L372 36"
+                stroke="#2563EB"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M162 148 L162 174 L188 174"
+                stroke="#2563EB"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M398 148 L398 174 L372 174"
+                stroke="#2563EB"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+
+              {/* ── SCAN BEAM ── */}
+              <rect
+                x="162"
+                y="101"
+                width="236"
+                height="14"
+                rx="7"
+                fill="url(#scanGlow)"
+              />
+              <rect
+                x="162"
+                y="106"
+                width="236"
+                height="3.5"
+                rx="2"
+                fill="url(#scanBeam)"
+              />
+
+              {/* ── RIGHT CARD: Score ── */}
+              <rect
+                x="430"
+                y="24"
+                width="108"
+                height="142"
+                rx="14"
+                fill="white"
+                stroke="#E2E8F0"
+                strokeWidth="1.5"
+              />
+              <text
+                x="484"
+                y="46"
+                fontSize="8.5"
+                fill="#94A3B8"
+                fontFamily="system-ui"
+                textAnchor="middle"
+              >
+                Wellness Score
+              </text>
+              {/* Score ring track */}
+              <circle
+                cx="484"
+                cy="90"
+                r="34"
+                fill="none"
+                stroke="#F0FDF4"
+                strokeWidth="8"
+              />
+              {/* Score arc ~82% — end point calculated: cx+r·cos(205.2°), cy+r·sin(205.2°) → (453,76) */}
+              <path
+                d="M484 56 A34 34 0 1 1 453 76"
+                stroke="#16A34A"
+                strokeWidth="8"
+                strokeLinecap="round"
+                fill="none"
+              />
+              <text
+                x="484"
+                y="96"
+                fontSize="24"
+                fontWeight="700"
+                fill="#15803D"
+                fontFamily="system-ui"
+                textAnchor="middle"
+              >
+                82
+              </text>
+              <text
+                x="484"
+                y="108"
+                fontSize="7.5"
+                fill="#94A3B8"
+                fontFamily="system-ui"
+                textAnchor="middle"
+              >
+                / 100
+              </text>
+              <line
+                x1="440"
+                y1="140"
+                x2="528"
+                y2="140"
+                stroke="#F1F5F9"
+                strokeWidth="1.5"
+              />
+              <rect
+                x="448"
+                y="148"
+                width="72"
+                height="10"
+                rx="5"
+                fill="#DCFCE7"
+              />
+              <text
+                x="484"
+                y="157"
+                fontSize="8"
+                fontWeight="600"
+                fill="#15803D"
+                fontFamily="system-ui"
+                textAnchor="middle"
+              >
+                High Support
+              </text>
+
+              {/* ── DECORATIVE ACCENTS ── */}
+              <circle cx="152" cy="26" r="5" fill="#FDE68A" opacity="0.8" />
+              <circle cx="408" cy="26" r="4" fill="#A5B4FC" opacity="0.8" />
+              <circle cx="280" cy="16" r="3" fill="#6EE7B7" opacity="0.9" />
+              <circle cx="152" cy="178" r="3.5" fill="#FCA5A5" opacity="0.7" />
+              <circle cx="408" cy="178" r="3" fill="#7DD3FC" opacity="0.7" />
+            </svg>
+          </div>
+
+          <div className="p-5">
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-4">
+              <div
+                className={`w-9 h-9 rounded-xl ring-1 grid place-items-center shrink-0 transition ${scanning ? "bg-brand-100 ring-brand-200" : "bg-brand-50 ring-brand-100"}`}
+              >
+                {scanning ? (
+                  <ArrowsClockwise
+                    size={16}
+                    className="text-brand-600 animate-spin"
                   />
+                ) : (
+                  <Barcode
+                    size={16}
+                    className="text-brand-600"
+                    weight="light"
+                  />
+                )}
+              </div>
+              <div>
+                <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+                  Scanner
                 </div>
-                <div className="grid grid-cols-5 gap-1.5">
-                  {mealPeriodOptions.map(([value, label]) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => handleMealPeriodSelect(value)}
-                      disabled={scanning}
-                      className={`h-8 rounded-full text-[10px] sm:text-[12px] font-medium px-1 truncate transition disabled:opacity-50 ${
-                        mealPeriod === value
-                          ? "bg-slate-900 text-white"
-                          : "bg-slate-50 text-slate-600 ring-1 ring-slate-200 hover:bg-brand-50 hover:text-brand-700 hover:ring-brand-100"
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                <div className="mt-3 rounded-xl bg-indigo-50 ring-1 ring-indigo-100 px-3 py-2 text-[12px] text-slate-700">
-                  {Number(scannerContext?.sleep?.todayHours ?? 0) > 0
-                    ? `You slept ${Number(scannerContext?.sleep?.todayHours ?? 0).toFixed(1)} hours today. Scanner suggestions will adapt to this.`
-                    : "No sleep override logged today yet. Default trend is still used for scanner suggestions."}
+                <div
+                  className={`text-[15px] font-display leading-tight ${scanning ? "text-brand-700" : "text-slate-900"}`}
+                >
+                  {scanning ? "Analyzing food…" : "What did you eat?"}
                 </div>
               </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              <button
+                onClick={() => setCameraOpen(true)}
+                disabled={scanning}
+                className="col-span-2 h-11 rounded-xl bg-brand-600 hover:bg-brand-700 disabled:opacity-40 text-white text-[13px] font-medium inline-flex items-center justify-center gap-2 transition"
+              >
+                <Camera size={15} /> Open camera
+              </button>
+              <label
+                className={`h-11 rounded-xl bg-white ring-1 ring-slate-200 text-slate-700 text-[13px] font-medium inline-flex items-center justify-center gap-2 cursor-pointer transition ${scanning ? "opacity-40 pointer-events-none" : "hover:bg-slate-50"}`}
+              >
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={onFileChange}
+                />
+                <UploadSimple size={14} /> Upload image
+              </label>
+              <button
+                onClick={openBudgetScanModal}
+                disabled={scanning || loadingBudgetLogs || scanningBudgetLog}
+                className="h-11 rounded-xl bg-white ring-1 ring-slate-200 text-slate-700 text-[13px] font-medium inline-flex items-center justify-center gap-2 hover:bg-brand-50 hover:text-brand-700 hover:ring-brand-100 disabled:opacity-40 transition"
+              >
+                <Basket size={14} />
+                {loadingBudgetLogs || scanningBudgetLog
+                  ? "Loading…"
+                  : "Budget log"}
+              </button>
+              <button
+                onClick={() => setShowManual(true)}
+                disabled={scanning}
+                className="col-span-2 h-11 rounded-xl bg-white ring-1 ring-slate-200 text-slate-700 text-[13px] font-medium inline-flex items-center justify-center gap-2 hover:bg-brand-50 hover:text-brand-700 hover:ring-brand-100 disabled:opacity-40 transition"
+              >
+                <Sparkle size={14} /> Type food manually
+              </button>
+            </div>
+
+            {/* Meal timing */}
+            <div className="rounded-xl bg-slate-50 ring-1 ring-slate-100 p-3.5">
+              <div className="flex items-center justify-between gap-3 mb-2.5">
+                <span className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
+                  Meal timing
+                </span>
+                <input
+                  type="datetime-local"
+                  value={eatenAt}
+                  onChange={(event) => handleEatenAtChange(event.target.value)}
+                  disabled={scanning}
+                  className="h-8 px-2.5 rounded-lg bg-white ring-1 ring-slate-200 text-[12px] text-slate-700 outline-none focus:ring-2 focus:ring-brand-400 disabled:opacity-50"
+                  style={{ width: "195px" }}
+                />
+              </div>
+              <div className="flex gap-1.5 flex-wrap">
+                {mealPeriodOptions.map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => handleMealPeriodSelect(value)}
+                    disabled={scanning}
+                    className={`h-7 px-3 rounded-full text-[11px] font-medium transition disabled:opacity-50 ${
+                      mealPeriod === value
+                        ? "bg-slate-900 text-white"
+                        : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-brand-50 hover:text-brand-700 hover:ring-brand-100"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {Number(scannerContext?.sleep?.todayHours ?? 0) > 0 && (
+                <div className="mt-2.5 rounded-lg bg-indigo-50 ring-1 ring-indigo-100 px-2.5 py-1.5 text-[11px] text-indigo-700 leading-snug">
+                  {Number(scannerContext.sleep.todayHours).toFixed(1)}h sleep
+                  logged today — scanner suggestions adapt to this.
+                </div>
+              )}
             </div>
           </div>
         </Card>
@@ -972,54 +1370,74 @@ export default function Scanner() {
                   </div>
                 </li>
               )}
-              {recentScans.map((r) => (
-                <li key={r.id}>
-                  <div
-                    className={`group w-full py-3 flex items-center gap-3 -mx-1 px-1 rounded-lg transition hover:bg-slate-50 ${result?.id === r.id ? "bg-brand-50" : ""}`}
-                  >
-                    <button
-                      onClick={() => setSelectedScan(r)}
-                      className="flex-1 flex items-center gap-3 min-w-0 text-left"
+              {recentScans.map((r) => {
+                const lvlColor =
+                  r.supportLevel === "High"
+                    ? "text-emerald-600"
+                    : r.supportLevel === "Low"
+                      ? "text-red-500"
+                      : "text-amber-500";
+                const dotColor =
+                  r.supportLevel === "High"
+                    ? "bg-emerald-500"
+                    : r.supportLevel === "Low"
+                      ? "bg-red-500"
+                      : "bg-amber-500";
+                return (
+                  <li key={r.id}>
+                    <div
+                      className={`group w-full py-2.5 flex items-center gap-2.5 -mx-1 px-1 rounded-lg transition hover:bg-slate-50 ${result?.id === r.id ? "bg-brand-50" : ""}`}
                     >
-                      <div
-                        className={`w-10 h-10 rounded-lg ring-1 grid place-items-center shrink-0 ${result?.id === r.id ? "bg-brand-100 ring-brand-200 text-brand-600" : "bg-brand-50 ring-brand-100 text-brand-600"}`}
+                      <button
+                        onClick={() => setSelectedScan(r)}
+                        className="flex-1 flex items-center gap-2.5 min-w-0 text-left"
                       >
-                        <Orange size={16} />
-                      </div>
-                      <div className="flex-1 leading-tight min-w-0">
                         <div
-                          className={`text-[13.5px] font-medium truncate flex items-center gap-1.5 ${result?.id === r.id ? "text-brand-700" : "text-slate-900"}`}
+                          className={`w-9 h-9 rounded-lg ring-1 grid place-items-center shrink-0 ${result?.id === r.id ? "bg-brand-100 ring-brand-200 text-brand-600" : "bg-brand-50 ring-brand-100 text-brand-600"}`}
                         >
-                          <span className="truncate">{r.productName}</span>
-                          {recentlyAddedId === r.id && (
-                            <span className="shrink-0 inline-flex items-center gap-1 text-[9.5px] font-semibold uppercase tracking-wider text-emerald-700 bg-emerald-50 ring-1 ring-emerald-100 px-1.5 py-0.5 rounded-full">
-                              <Sparkle size={9} weight="fill" /> New
-                            </span>
-                          )}
+                          <Orange size={15} />
                         </div>
-                        <div className="text-[11px] text-slate-500">
-                          {r.variant ?? r.foodType} · {timeAgo(r.createdAt)}
+                        <div className="flex-1 min-w-0">
+                          <div
+                            className={`text-[13px] font-medium truncate leading-tight ${result?.id === r.id ? "text-brand-700" : "text-slate-900"}`}
+                          >
+                            {r.productName}
+                            {recentlyAddedId === r.id && (
+                              <span className="ml-1.5 inline-flex items-center gap-0.5 text-[9px] font-semibold uppercase tracking-wider text-emerald-700 bg-emerald-50 ring-1 ring-emerald-100 px-1.5 py-0.5 rounded-full align-middle">
+                                <Sparkle size={8} weight="fill" /> New
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-slate-400 truncate mt-0.5 leading-tight">
+                            {r.variant ?? r.foodType} · {timeAgo(r.createdAt)}
+                          </div>
                         </div>
-                      </div>
-                      <Support level={r.supportLevel} />
-                      <span className="font-mono text-[12px] text-slate-700 tabular-nums w-7 text-right">
-                        {r.score}
-                      </span>
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteScan(r);
-                      }}
-                      disabled={deletingIds.has(r.id)}
-                      title="Delete scan"
-                      className="ml-1 p-1.5 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 transition sm:opacity-0 sm:group-hover:opacity-100 disabled:opacity-40 disabled:cursor-wait"
-                    >
-                      <Trash size={14} />
-                    </button>
-                  </div>
-                </li>
-              ))}
+                        <div className="shrink-0 flex items-center gap-1.5 pl-1">
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${dotColor}`}
+                          />
+                          <span
+                            className={`font-mono text-[13px] font-semibold tabular-nums ${lvlColor}`}
+                          >
+                            {r.score}
+                          </span>
+                        </div>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteScan(r);
+                        }}
+                        disabled={deletingIds.has(r.id)}
+                        title="Delete scan"
+                        className="ml-1 p-1.5 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 transition sm:opacity-0 sm:group-hover:opacity-100 disabled:opacity-40 disabled:cursor-wait"
+                      >
+                        <Trash size={14} />
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           ) : (
             <div className="rounded-2xl bg-brand-50/70 ring-1 ring-brand-100 p-6 text-center">
@@ -1176,70 +1594,52 @@ export default function Scanner() {
         </Card>
       ) : result ? (
         <Card ref={resultRef} className="overflow-hidden p-0 mb-5 scroll-mt-6">
-          <div className="relative p-4 sm:p-7 bg-gradient-to-br from-brand-50/60 via-white to-cyan-50/40">
-            <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-5">
+          <div className="p-4 sm:p-6 border-b border-slate-100">
+            <div className="flex items-start gap-4">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] text-brand-600 font-semibold mb-2">
+                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] text-brand-600 font-semibold mb-1.5">
                   <Check size={11} weight="bold" /> Verified match
                 </div>
-                <h2 className="font-display text-[22px] sm:text-[30px] leading-[1.05] text-slate-900 tracking-tight">
+                <h2 className="font-display text-[20px] sm:text-[24px] leading-tight text-slate-900">
                   {result.name}
                 </h2>
-                <div className="text-[13px] text-slate-500 mt-1.5">
+                <div className="text-[12px] text-slate-500 mt-1">
                   {result.variant} · {result.serving}
                 </div>
-                <div className="flex items-center gap-2 mt-3 flex-wrap">
+                <div className="flex items-center gap-2 mt-2.5 flex-wrap">
                   <Support level={result.supportLevel} />
-                  <Pill
-                    tone={
-                      result.supportLevel === "Low"
-                        ? "amber"
-                        : result.supportLevel === "High"
-                          ? "green"
-                          : "slate"
-                    }
-                    className="!normal-case !tracking-normal"
-                  >
-                    {result.supportLevel === "High"
-                      ? "Excellent choice"
-                      : result.supportLevel === "Medium"
-                        ? "Best in moderation"
-                        : "Use sparingly"}
-                  </Pill>
                   <Pill tone="slate" className="!normal-case !tracking-normal">
                     <Lock size={11} /> {profilePlanLabel(profile)}
                   </Pill>
+                  <div
+                    className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                      result.diff >= 0
+                        ? "text-emerald-700 bg-emerald-50"
+                        : "text-red-700 bg-red-50"
+                    }`}
+                  >
+                    {result.diff >= 0 ? (
+                      <CaretUp size={10} weight="bold" />
+                    ) : (
+                      <CaretDown size={10} weight="bold" />
+                    )}
+                    {Math.abs(result.diff)}{" "}
+                    {result.diff >= 0 ? "above avg" : "below avg"}
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center justify-between sm:justify-start gap-4 w-full sm:w-auto shrink-0">
-                <div
-                  className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full ${
-                    result.diff >= 0
-                      ? "text-emerald-700 bg-emerald-50"
-                      : "text-red-700 bg-red-50"
-                  }`}
-                >
-                  {result.diff >= 0 ? (
-                    <CaretUp size={11} weight="bold" />
-                  ) : (
-                    <CaretDown size={11} weight="bold" />
-                  )}
-                  {Math.abs(result.diff)}{" "}
-                  {result.diff >= 0 ? "above avg" : "below avg"}
-                </div>
+              <div className="flex flex-col items-end gap-3 shrink-0">
                 <Ring
                   value={result.score}
-                  size={80}
-                  stroke={8}
+                  size={72}
+                  stroke={7}
                   tone={scoreTone}
                   sub="score"
                 />
+                <Button variant="ghost" size="sm" onClick={handleSwap}>
+                  <ArrowsClockwise size={13} /> Swap
+                </Button>
               </div>
-            </div>
-            <div className="relative z-10 mt-5 pt-4 border-t border-slate-200/70">
-              <Button variant="ghost" size="sm" onClick={handleSwap}>
-                <ArrowsClockwise size={14} /> Swap plan
-              </Button>
             </div>
           </div>
 
@@ -1620,84 +2020,103 @@ export default function Scanner() {
 
           {tab === "ingredients" && (
             <div className="p-4 sm:p-6">
-              <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-3">
+              <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-4">
                 Ingredients
               </div>
-              <p className="text-[14px] text-slate-700 leading-relaxed max-w-[640px]">
-                {result.ingredients}
-              </p>
+              {result.ingredients.length === 0 ? (
+                <p className="text-[13px] text-slate-400 italic">
+                  Ingredient list not available for this item.
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {result.ingredients.map((ing, i) => {
+                    const concernStyle =
+                      {
+                        allergen: "bg-red-50 ring-red-200 text-red-800",
+                        "high-sodium":
+                          "bg-amber-50 ring-amber-200 text-amber-800",
+                        "high-sugar":
+                          "bg-orange-50 ring-orange-200 text-orange-800",
+                        "high-fat":
+                          "bg-yellow-50 ring-yellow-200 text-yellow-800",
+                        additive:
+                          "bg-purple-50 ring-purple-200 text-purple-800",
+                        preservative:
+                          "bg-purple-50 ring-purple-200 text-purple-800",
+                      }[ing.concern] ??
+                      "bg-slate-50 ring-slate-200 text-slate-700";
+
+                    const concernBadge = {
+                      allergen: "Allergen",
+                      "high-sodium": "High sodium",
+                      "high-sugar": "High sugar",
+                      "high-fat": "High fat",
+                      additive: "Additive",
+                      preservative: "Preservative",
+                    }[ing.concern];
+
+                    return (
+                      <div
+                        key={i}
+                        className={`rounded-xl ring-1 px-3 py-2.5 flex flex-col gap-0.5 ${concernStyle}`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="text-[13px] font-semibold leading-snug">
+                            {ing.name}
+                          </span>
+                          {concernBadge && (
+                            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide opacity-70 mt-0.5">
+                              {concernBadge}
+                            </span>
+                          )}
+                        </div>
+                        {ing.note && (
+                          <span className="text-[11px] opacity-70 leading-snug">
+                            {ing.note}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
         </Card>
       ) : (
-        <Card className="overflow-hidden p-0 mb-5">
-          <div className="p-8 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-            <div className="lg:col-span-4 rounded-3xl bg-slate-50 ring-1 ring-slate-200 min-h-[240px] grid place-items-center">
-              <div className="relative">
-                <Scan size={150} className="text-slate-200" weight="light" />
-                <div className="absolute inset-0 grid place-items-center text-brand-500">
-                  <Barcode size={62} weight="duotone" />
-                </div>
+        <Card className="p-10 mb-5 flex flex-col items-center text-center">
+          <div className="w-14 h-14 rounded-2xl bg-brand-50 ring-1 ring-brand-100 grid place-items-center mb-4">
+            <Barcode size={28} className="text-brand-500" weight="duotone" />
+          </div>
+          <div className="font-display text-[18px] text-slate-900 leading-tight mb-1.5">
+            Scan results appear here
+          </div>
+          <p className="text-[13px] text-slate-500 max-w-[340px] leading-relaxed mb-6">
+            Type a food, upload a label, or scan a barcode. KainWise will score
+            it against{" "}
+            <span className="font-medium text-slate-700">
+              {profilePlanLabel(profile)}
+            </span>
+            .
+          </p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {[
+              { icon: Package, label: "Product match" },
+              { icon: Scan, label: "Wellness score" },
+              { icon: Sparkle, label: "AI guidance" },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 ring-1 ring-slate-200 px-3 py-1.5 text-[12px] text-slate-600 font-medium"
+              >
+                <item.icon
+                  size={13}
+                  className="text-brand-500"
+                  weight="duotone"
+                />
+                {item.label}
               </div>
-            </div>
-            <div className="lg:col-span-8">
-              <div className="inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-brand-700 ring-1 ring-brand-100">
-                <Sparkle size={13} /> Ready for backend scan
-              </div>
-              <h2 className="mt-4 font-display text-[28px] leading-tight text-slate-900">
-                Scan results will appear here
-              </h2>
-              <p className="mt-2 max-w-[560px] text-[14px] leading-relaxed text-slate-600">
-                Once you type a meal or upload a nutrition label, KainWise will
-                score it against {profilePlanLabel(profile)}, show nutrition
-                targets, highlight flags, and save it to your scan history.
-              </p>
-              <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {[
-                  {
-                    icon: Package,
-                    title: "Product match",
-                    text: "Name, type, barcode",
-                  },
-                  {
-                    icon: Scan,
-                    title: "Wellness score",
-                    text: "Support level out of 100",
-                  },
-                  {
-                    icon: Sparkle,
-                    title: "AI note",
-                    text: "Profile-aware guidance",
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.title}
-                    className="rounded-2xl bg-white p-4 ring-1 ring-slate-200"
-                  >
-                    <item.icon
-                      size={20}
-                      className="mb-2 text-brand-500"
-                      weight="duotone"
-                    />
-                    <div className="text-[13px] font-semibold text-slate-900">
-                      {item.title}
-                    </div>
-                    <div className="mt-0.5 text-[12px] text-slate-500">
-                      {item.text}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-5 flex">
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => fileRef.current?.click()}
-                >
-                  <UploadSimple size={14} /> Upload barcode
-                </Button>
-              </div>
-            </div>
+            ))}
           </div>
         </Card>
       )}

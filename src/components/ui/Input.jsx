@@ -9,7 +9,7 @@ export function Input({ className = "", ...props }) {
 
 export { Select } from "../Select.jsx";
 
-export function Field({ label, hint, children, className = "" }) {
+export function Field({ label, hint, children, className = "", error }) {
   return (
     <label className={`block ${className}`}>
       <div className="flex items-baseline justify-between mb-1.5">
@@ -17,6 +17,11 @@ export function Field({ label, hint, children, className = "" }) {
         {hint && <span className="text-[11px] text-slate-400">{hint}</span>}
       </div>
       {children}
+      {error && (
+        <span className="block text-[11px] text-red-500 mt-1 leading-tight">
+          {error}
+        </span>
+      )}
     </label>
   );
 }

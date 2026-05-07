@@ -465,27 +465,16 @@ export default function Workout() {
       )}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
-        <div>
-          <div className="text-[11px] tracking-[0.18em] uppercase text-brand-600 font-semibold mb-2">
-            Wellness log
-          </div>
-          <h1 className="font-display text-[34px] leading-[1.05] tracking-tight text-slate-900">
-            Workouts, water, and sleep
-          </h1>
-          <p className="text-slate-600 mt-2 max-w-[560px]">
-            Low-impact movement tailored to your recovery. Every session counts
-            toward healing.
-          </p>
+      <div className="mb-5 sm:mb-7">
+        <div className="text-[11px] tracking-[0.18em] uppercase text-brand-600 font-semibold mb-2">
+          Wellness log
         </div>
-        <div className="flex gap-2">
-          <Button variant="line" size="sm" onClick={() => openLog()}>
-            <Play size={13} /> Start session
-          </Button>
-          <Button variant="primary" size="sm" onClick={() => openLog()}>
-            <Plus size={14} /> Log workout
-          </Button>
-        </div>
+        <h1 className="font-display text-[26px] sm:text-[34px] leading-[1.05] tracking-tight text-slate-900">
+          Workouts, water &amp; sleep
+        </h1>
+        <p className="text-slate-600 mt-2 max-w-[600px]">
+          Track movement, hydration, and rest — all in one place.
+        </p>
       </div>
 
       {loading && (
@@ -498,132 +487,214 @@ export default function Workout() {
         <Card className="p-5 mb-5 text-[13px] text-red-600">{error}</Card>
       )}
 
-      {/* Hydration strip */}
-      <Card className="p-4 mb-4 flex flex-col gap-4 sm:flex-row sm:items-center">
-        <div className="w-11 h-11 rounded-2xl bg-sky-50 text-sky-600 grid place-items-center shrink-0">
-          <Drop size={20} weight="fill" />
-        </div>
-        <div className="shrink-0 self-start sm:self-auto">
-          <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
-            Today
+      {/* Top row: action card + water/sleep panels */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-5">
+        {/* Action card */}
+        <Card className="lg:col-span-7 p-5">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-9 h-9 rounded-xl bg-brand-50 ring-1 ring-brand-100 grid place-items-center shrink-0">
+              <Barbell size={16} className="text-brand-600" />
+            </div>
+            <div>
+              <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+                Wellness log
+              </div>
+              <div className="text-[15px] font-display leading-tight text-slate-900">
+                What did you do today?
+              </div>
+            </div>
           </div>
-          <div className="font-display text-[22px] leading-none text-slate-900 mt-1">
-            {waterTotalToday}
-            <span className="text-[12px] text-slate-400 ml-1">ml</span>
+          <div className="grid grid-cols-2 gap-2 mb-4">
+            <button
+              onClick={() => openLog()}
+              className="col-span-2 h-11 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-[13px] font-medium inline-flex items-center justify-center gap-2 transition"
+            >
+              <Barbell size={15} /> Log workout
+            </button>
+            <button
+              onClick={() => {
+                resetWaterForm();
+                setShowWater(true);
+              }}
+              className="h-11 rounded-xl bg-white ring-1 ring-slate-200 text-slate-700 text-[13px] font-medium inline-flex items-center justify-center gap-2 hover:bg-sky-50 hover:text-sky-700 hover:ring-sky-100 transition"
+            >
+              <Drop size={14} /> Log water
+            </button>
+            <button
+              onClick={() => {
+                resetSleepForm();
+                setShowSleep(true);
+              }}
+              className="h-11 rounded-xl bg-white ring-1 ring-slate-200 text-slate-700 text-[13px] font-medium inline-flex items-center justify-center gap-2 hover:bg-indigo-50 hover:text-indigo-700 hover:ring-indigo-100 transition"
+            >
+              <Moon size={14} /> Log sleep
+            </button>
+            <button
+              onClick={() => openLog()}
+              className="col-span-2 h-11 rounded-xl bg-white ring-1 ring-slate-200 text-slate-700 text-[13px] font-medium inline-flex items-center justify-center gap-2 hover:bg-brand-50 hover:text-brand-700 hover:ring-brand-100 transition"
+            >
+              <Play size={14} /> Start session
+            </button>
           </div>
-        </div>
-        <div className="hidden h-10 w-px bg-slate-200 mx-1 sm:block" />
-        <div className="w-full flex-1 min-w-0 flex items-center gap-2 overflow-x-auto scroll-hide">
-          {waterLogs.length === 0 ? (
-            <p className="text-[12.5px] text-slate-500">
-              No water logged yet — track a glass to feed calendar &amp;
-              insights.
-            </p>
-          ) : (
-            waterLogs.slice(0, 4).map((log) => (
-              <button
-                key={log.id}
-                type="button"
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-xl bg-sky-50 ring-1 ring-sky-100 p-3 flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-sky-100 grid place-items-center shrink-0">
+                <Drop size={14} className="text-sky-600" weight="fill" />
+              </div>
+              <div>
+                <div className="text-[10px] uppercase tracking-wider text-sky-600 font-semibold">
+                  Water today
+                </div>
+                <div className="font-display text-[18px] leading-none text-slate-900">
+                  {waterTotalToday}
+                  <span className="text-[11px] text-slate-400 ml-1">ml</span>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-xl bg-indigo-50 ring-1 ring-indigo-100 p-3 flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-indigo-100 grid place-items-center shrink-0">
+                <Moon size={14} className="text-indigo-600" weight="fill" />
+              </div>
+              <div>
+                <div className="text-[10px] uppercase tracking-wider text-indigo-600 font-semibold">
+                  Sleep today
+                </div>
+                <div className="font-display text-[18px] leading-none text-slate-900">
+                  {sleepTotalToday ? sleepTotalToday.toFixed(1) : "0.0"}
+                  <span className="text-[11px] text-slate-400 ml-1">h</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Water + Sleep recent logs */}
+        <div className="lg:col-span-5 flex flex-col gap-5">
+          {/* Water */}
+          <Card className="flex-1 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-sky-50 text-sky-600 grid place-items-center ring-1 ring-sky-100 shrink-0">
+                  <Drop size={15} weight="fill" />
+                </div>
+                <div>
+                  <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+                    Hydration
+                  </div>
+                  <div className="font-display text-[15px] leading-tight text-slate-900">
+                    Water log
+                  </div>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => {
-                  editWaterLog(log);
+                  resetWaterForm();
                   setShowWater(true);
                 }}
-                className="shrink-0 rounded-xl bg-slate-50 hover:bg-sky-50 transition px-3 py-2 text-left"
-                title="Edit water log"
               >
-                <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold capitalize">
-                  {log.waterPeriod ?? "water"}
-                </div>
-                <div className="font-mono text-[13px] text-slate-900 tabular-nums">
-                  {log.amountMl}
-                  <span className="text-[10px] text-slate-400 ml-1">ml</span>
-                </div>
-              </button>
-            ))
-          )}
-        </div>
-        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:shrink-0">
-          {waterLogs.length > 4 && (
-            <span className="text-[11px] text-slate-500">
-              +{waterLogs.length - 4} more
-            </span>
-          )}
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => {
-              resetWaterForm();
-              setShowWater(true);
-            }}
-            className="w-full sm:w-auto"
-          >
-            <Plus size={12} /> Log water
-          </Button>
-        </div>
-      </Card>
+                <Plus size={12} /> Log
+              </Button>
+            </div>
+            {waterLogs.length === 0 ? (
+              <p className="text-[12px] text-slate-400 text-center py-4">
+                No water logged yet.
+              </p>
+            ) : (
+              <div className="space-y-0.5">
+                {waterLogs.slice(0, 5).map((log) => (
+                  <button
+                    key={log.id}
+                    type="button"
+                    onClick={() => {
+                      editWaterLog(log);
+                      setShowWater(true);
+                    }}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-sky-50 transition text-left"
+                  >
+                    <span className="text-[12px] text-slate-600 capitalize">
+                      {log.waterPeriod ?? "water"}
+                    </span>
+                    <span className="font-mono text-[13px] text-slate-900 tabular-nums">
+                      {log.amountMl}{" "}
+                      <span className="text-[10px] text-slate-400">ml</span>
+                    </span>
+                  </button>
+                ))}
+                {waterLogs.length > 5 && (
+                  <div className="text-[11px] text-slate-400 text-center pt-1">
+                    +{waterLogs.length - 5} more
+                  </div>
+                )}
+              </div>
+            )}
+          </Card>
 
-      {/* Sleep strip */}
-      <Card className="p-4 mb-5 flex flex-col gap-4 sm:flex-row sm:items-center">
-        <div className="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 grid place-items-center shrink-0">
-          <Moon size={20} weight="fill" />
-        </div>
-        <div className="shrink-0 self-start sm:self-auto">
-          <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
-            Today sleep
-          </div>
-          <div className="font-display text-[22px] leading-none text-slate-900 mt-1">
-            {sleepTotalToday ? sleepTotalToday.toFixed(1) : "0.0"}
-            <span className="text-[12px] text-slate-400 ml-1">hours</span>
-          </div>
-        </div>
-        <div className="hidden h-10 w-px bg-slate-200 mx-1 sm:block" />
-        <div className="w-full flex-1 min-w-0 flex items-center gap-2 overflow-x-auto scroll-hide">
-          {sleepLogs.length === 0 ? (
-            <p className="text-[12.5px] text-slate-500">
-              No sleep logged yet. Default is 8h/day, then you can override it.
-            </p>
-          ) : (
-            sleepLogs.slice(0, 4).map((log) => (
-              <button
-                key={log.id}
-                type="button"
+          {/* Sleep */}
+          <Card className="flex-1 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 grid place-items-center ring-1 ring-indigo-100 shrink-0">
+                  <Moon size={15} weight="fill" />
+                </div>
+                <div>
+                  <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+                    Rest
+                  </div>
+                  <div className="font-display text-[15px] leading-tight text-slate-900">
+                    Sleep log
+                  </div>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => {
-                  editSleepLog(log);
+                  resetSleepForm();
                   setShowSleep(true);
                 }}
-                className="shrink-0 rounded-xl bg-slate-50 hover:bg-indigo-50 transition px-3 py-2 text-left"
-                title="Edit sleep log"
               >
-                <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold capitalize">
-                  {new Date(log.sleptAt ?? log.createdAt).toLocaleDateString()}
-                </div>
-                <div className="font-mono text-[13px] text-slate-900 tabular-nums">
-                  {Number(log.hours ?? 0).toFixed(1)}
-                  <span className="text-[10px] text-slate-400 ml-1">h</span>
-                </div>
-              </button>
-            ))
-          )}
+                <Plus size={12} /> Log
+              </Button>
+            </div>
+            {sleepLogs.length === 0 ? (
+              <p className="text-[12px] text-slate-400 text-center py-4">
+                No sleep logged yet.
+              </p>
+            ) : (
+              <div className="space-y-0.5">
+                {sleepLogs.slice(0, 5).map((log) => (
+                  <button
+                    key={log.id}
+                    type="button"
+                    onClick={() => {
+                      editSleepLog(log);
+                      setShowSleep(true);
+                    }}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-indigo-50 transition text-left"
+                  >
+                    <span className="text-[12px] text-slate-600">
+                      {new Date(
+                        log.sleptAt ?? log.createdAt,
+                      ).toLocaleDateString()}
+                    </span>
+                    <span className="font-mono text-[13px] text-slate-900 tabular-nums">
+                      {Number(log.hours ?? 0).toFixed(1)}{" "}
+                      <span className="text-[10px] text-slate-400">h</span>
+                    </span>
+                  </button>
+                ))}
+                {sleepLogs.length > 5 && (
+                  <div className="text-[11px] text-slate-400 text-center pt-1">
+                    +{sleepLogs.length - 5} more
+                  </div>
+                )}
+              </div>
+            )}
+          </Card>
         </div>
-        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:shrink-0">
-          {sleepLogs.length > 4 && (
-            <span className="text-[11px] text-slate-500">
-              +{sleepLogs.length - 4} more
-            </span>
-          )}
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => {
-              resetSleepForm();
-              setShowSleep(true);
-            }}
-            className="w-full sm:w-auto"
-          >
-            <Plus size={12} /> Log sleep
-          </Button>
-        </div>
-      </Card>
+      </div>
 
       {/* Weekly overview + AI suggestions */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-5">
@@ -648,7 +719,7 @@ export default function Workout() {
                 <div className="text-[12px] text-slate-500 mt-1">
                   of 150 target
                 </div>
-                <div className="inline-flex items-center gap-1 mt-2 text-[12px] text-emerald-600 font-medium">
+                <div className="inline-flex items-center gap-1 mt-2 text-[12px] text-emerald-600 font-medium whitespace-nowrap">
                   <CaretUp size={12} /> +20 vs last wk
                 </div>
               </div>
@@ -847,7 +918,9 @@ export default function Workout() {
                     }}
                     className="!text-red-600 hover:!bg-red-50 disabled:opacity-50"
                   >
-                    {deletingWaterId === editingWaterId ? "Deleting…" : "Delete"}
+                    {deletingWaterId === editingWaterId
+                      ? "Deleting…"
+                      : "Delete"}
                   </Button>
                 )}
                 <Button
