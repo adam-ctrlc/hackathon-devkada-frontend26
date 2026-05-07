@@ -32,14 +32,13 @@ const generateUsername = (first, last) => {
   const f = slugify(first);
   const l = slugify(last);
   if (!f && !l) return "";
-  const num = () => Math.floor(Math.random() * 900 + 100);
+  const num = () => Math.floor(Math.random() * 9000 + 1000);
+  const n = num();
   const patterns = [
-    f && l ? `${f}.${l}` : f || l,
-    f && l ? `${f}${l}` : `${f || l}${num()}`,
-    f && l ? `${f}_${l}` : `${f || l}`,
-    f && l ? `${f[0]}.${l}` : `${f || l}${num()}`,
-    f && l ? `${f}.${l}${num()}` : `${f || l}${num()}`,
-    f && l ? `${f[0]}${l}${num()}` : `${f || l}${num()}`,
+    f && l ? `${f}.${l}${n}` : `${f || l}${n}`,
+    f && l ? `${f}${l}${n}` : `${f || l}${n}`,
+    f && l ? `${f[0]}${l}${n}` : `${f || l}${n}`,
+    f && l ? `${f}.${l[0]}${n}` : `${f || l}${n}`,
   ].filter(Boolean);
   const pick = patterns[Math.floor(Math.random() * patterns.length)];
   return pick.slice(0, 80);

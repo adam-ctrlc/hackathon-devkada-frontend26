@@ -2,6 +2,13 @@ import { useState } from "react";
 import { X, Plus } from "@phosphor-icons/react";
 import { Select } from "../../../../components/Select.jsx";
 
+const toTitleCase = (str) =>
+  str
+    .trim()
+    .replace(/\w\S*/g, (w) => w[0].toUpperCase() + w.slice(1).toLowerCase());
+
+const key = (s) => s.trim().toLowerCase();
+
 export function TagSelect({
   tags,
   onAdd,
@@ -13,11 +20,12 @@ export function TagSelect({
   disabled = false,
 }) {
   const [customVal, setCustomVal] = useState("");
-  const available = options.filter((o) => !tags.includes(o));
+  const tagKeys = new Set(tags.map(key));
+  const available = options.filter((o) => !tagKeys.has(key(o)));
 
   const addCustom = () => {
-    const t = customVal.trim();
-    if (t && !tags.includes(t)) {
+    const t = toTitleCase(customVal);
+    if (t && !tagKeys.has(key(t))) {
       onAdd(t);
       setCustomVal("");
     }
@@ -53,7 +61,7 @@ export function TagSelect({
             <Select
               value=""
               onChange={(e) => {
-                if (e.target.value) onAdd(e.target.value);
+                if (e.target.value) onAdd(toTitleCase(e.target.value));
               }}
             >
               <option value="">{placeholder}</option>
