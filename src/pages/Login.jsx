@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Eye, EyeSlash } from "@phosphor-icons/react";
+import {
+  Eye,
+  EyeSlash,
+  EnvelopeSimple,
+  ArrowsClockwise,
+} from "@phosphor-icons/react";
 import { Card } from "../components/ui/Card.jsx";
 import { Button } from "../components/ui/Button.jsx";
 import { Input, Field } from "../components/ui/Input.jsx";
@@ -15,6 +20,8 @@ import {
   isRateLimitError,
 } from "../lib/api.js";
 import { setAuthSession } from "../lib/auth-session.js";
+import { AppFooter } from "../components/AppFooter.jsx";
+import { usePageTitle } from "../hooks/usePageTitle.js";
 
 const emptyResetState = {
   email: "",
@@ -35,6 +42,9 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
   const [turnstileNonce, setTurnstileNonce] = useState(0);
+  const [unverifiedEmail, setUnverifiedEmail] = useState("");
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState("");
 
   const [resetStage, setResetStage] = useState("request");
   const [resetState, setResetState] = useState(emptyResetState);
@@ -96,11 +106,33 @@ export default function Login() {
       navigate("/u/dashboard");
     } catch (err) {
       setApiError(err);
-      setError(formatApiError(err));
+      if (err.code === "EMAIL_NOT_VERIFIED" && err.data?.email) {
+        setUnverifiedEmail(err.data.email);
+        setError("");
+      } else {
+        setError(formatApiError(err));
+      }
       setTurnstileNonce((value) => value + 1);
       setTurnstileToken("");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerify = async () => {
+    setResendMessage("");
+    setResendLoading(true);
+    try {
+      await apiRequest("/auth/resend-verify", {
+        method: "POST",
+        auth: false,
+        body: { email: unverifiedEmail },
+      });
+      setResendMessage("A new verification code was sent to your email.");
+    } catch {
+      setResendMessage("Could not resend — try again shortly.");
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -126,7 +158,7 @@ export default function Login() {
       }
 
       try {
-        const response = await apiRequest("/auth/password-reset/request", {
+        await apiRequest("/auth/password-reset/request", {
           method: "POST",
           auth: false,
           body: {
@@ -135,12 +167,8 @@ export default function Login() {
           },
         });
 
-        setResetState((value) => ({
-          ...value,
-          token: response.resetToken ?? "",
-        }));
         setResetMessage(
-          "Reset token generated. Continue with the new password.",
+          "A reset code was sent to your email. Enter it below to continue.",
         );
         setResetStage("confirm");
         setResetTurnstileNonce((value) => value + 1);
@@ -215,123 +243,163 @@ export default function Login() {
   const resetTokenError = getApiFieldError(resetApiError, "resetToken");
   const resetPasswordError = getApiFieldError(resetApiError, "newPassword");
 
+  usePageTitle("Sign in");
+
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4 relative overflow-hidden">
-      <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-brand-100/40 blur-3xl" />
-      <div className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full bg-brand-50/60 blur-3xl" />
+    <div className="min-h-screen bg-slate-50 flex flex-col overflow-hidden">
+      <div className="flex-1 flex items-center justify-center px-4 relative overflow-hidden">
+        <img
+          src="/images/philippines.svg"
+          alt=""
+          aria-hidden="true"
+          className="absolute top-1/2 -translate-y-1/2 -right-[30%] w-[180vw] sm:w-[900px] sm:-right-24 max-w-none opacity-[0.05] pointer-events-none select-none"
+        />
+        <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-brand-100/40 blur-3xl" />
+        <div className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full bg-brand-50/60 blur-3xl" />
 
-      <div className="relative w-full max-w-[400px]">
-        <div className="flex items-center justify-center gap-2.5 mb-8">
-          <img
-            src="/logo.png"
-            alt="KainWise logo"
-            className="w-10 h-10 rounded-xl object-cover"
-          />
-          <BrandName className="text-[20px] text-slate-900" />
-        </div>
-
-        <Card className="p-8 shadow-card">
-          <div className="text-center mb-6">
-            <h1 className="font-display text-[22px] text-slate-900">
-              Welcome back
-            </h1>
-            <p className="text-[13px] text-slate-500 mt-1">
-              Sign in to continue your wellness journey.
-            </p>
-          </div>
-
-          {isRateLimitError(apiError) ? (
-            <RateLimitNotice error={apiError} className="mb-5" compact />
-          ) : error ? (
-            <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-[13px] text-red-700">
-              {error}
-            </div>
-          ) : null}
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <Field label="Email or username">
-              <Input
-                type="text"
-                placeholder="you@example.com or username"
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
-                autoComplete="username"
-                required
-              />
-            </Field>
-            {identifierError && (
-              <p className="-mt-3 text-[12px] text-red-600">
-                {identifierError}
-              </p>
-            )}
-
-            <Field
-              label="Password"
-              hint={
-                <button
-                  type="button"
-                  onClick={() => setShowForgot(true)}
-                  className="cursor-pointer text-[11px] font-medium text-brand-600 hover:underline"
-                >
-                  Forgot password?
-                </button>
-              }
-            >
-              <div className="relative">
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="current-password"
-                  required
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((value) => !value)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
-                  tabIndex={-1}
-                >
-                  {showPassword ? <EyeSlash size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-            </Field>
-            {passwordError && (
-              <p className="-mt-3 text-[12px] text-red-600">{passwordError}</p>
-            )}
-
-            <TurnstileWidget
-              key={turnstileNonce}
-              onToken={setTurnstileToken}
-              onExpire={() => setTurnstileToken("")}
-              className="flex justify-center"
+        <div className="relative w-full max-w-[400px]">
+          <Link
+            to="/landing"
+            className="flex items-center justify-center gap-2.5 mb-8"
+          >
+            <img
+              src="/logo.png"
+              alt="KainWise logo"
+              className="w-10 h-10 rounded-xl object-cover"
             />
+            <BrandName className="text-[20px] text-slate-900" />
+          </Link>
 
-            <Button
-              variant="primary"
-              size="lg"
-              className="w-full mt-1"
-              type="submit"
-              disabled={loading}
-            >
-              {loading ? "Signing in..." : "Sign in"}
-            </Button>
-          </form>
+          <Card className="p-8 shadow-card">
+            <div className="text-center mb-6">
+              <h1 className="font-display text-[22px] text-slate-900">
+                Welcome back
+              </h1>
+              <p className="text-[13px] text-slate-500 mt-1">
+                Sign in to continue your wellness journey.
+              </p>
+            </div>
 
-          <div className="mt-6 pt-5 border-t border-slate-200 text-center">
-            <p className="text-[13px] text-slate-500">
-              New to KainWise?{" "}
-              <Link
-                to="/register"
-                className="text-brand-600 font-medium hover:underline"
+            {isRateLimitError(apiError) ? (
+              <RateLimitNotice error={apiError} className="mb-5" compact />
+            ) : unverifiedEmail ? (
+              <div className="mb-4 rounded-lg bg-amber-50 border border-amber-200 px-3 py-3 text-[13px] text-amber-800">
+                <div className="flex items-center gap-2 mb-1.5 font-medium">
+                  <EnvelopeSimple size={14} />
+                  Email not verified
+                </div>
+                <p className="text-amber-700 mb-2">
+                  Check your inbox for the verification code sent to{" "}
+                  <span className="font-medium">{unverifiedEmail}</span>.
+                </p>
+                {resendMessage ? (
+                  <p className="text-[12px] text-amber-600">{resendMessage}</p>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleResendVerify}
+                    disabled={resendLoading}
+                    className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-amber-800 hover:underline disabled:opacity-50"
+                  >
+                    <ArrowsClockwise size={11} />
+                    {resendLoading ? "Sending..." : "Resend verification code"}
+                  </button>
+                )}
+              </div>
+            ) : error ? (
+              <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-[13px] text-red-700">
+                {error}
+              </div>
+            ) : null}
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <Field label="Email or username">
+                <Input
+                  type="text"
+                  placeholder="you@example.com or username"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  autoComplete="username"
+                  required
+                />
+              </Field>
+              {identifierError && (
+                <p className="-mt-3 text-[12px] text-red-600">
+                  {identifierError}
+                </p>
+              )}
+
+              <Field
+                label="Password"
+                hint={
+                  <button
+                    type="button"
+                    onClick={() => setShowForgot(true)}
+                    className="cursor-pointer text-[11px] font-medium text-brand-600 hover:underline"
+                  >
+                    Forgot password?
+                  </button>
+                }
               >
-                Create an account
-              </Link>
-            </p>
-          </div>
-        </Card>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
+                    required
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((value) => !value)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeSlash size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </Field>
+              {passwordError && (
+                <p className="-mt-3 text-[12px] text-red-600">
+                  {passwordError}
+                </p>
+              )}
+
+              <TurnstileWidget
+                key={turnstileNonce}
+                onToken={setTurnstileToken}
+                onExpire={() => setTurnstileToken("")}
+                className="flex justify-center"
+              />
+
+              <Button
+                variant="primary"
+                size="lg"
+                className="w-full mt-1"
+                type="submit"
+                disabled={loading}
+              >
+                {loading ? "Signing in..." : "Sign in"}
+              </Button>
+            </form>
+
+            <div className="mt-6 pt-5 border-t border-slate-200 text-center">
+              <p className="text-[13px] text-slate-500">
+                New to KainWise?{" "}
+                <Link
+                  to="/register"
+                  className="text-brand-600 font-medium hover:underline"
+                >
+                  Create an account
+                </Link>
+              </p>
+            </div>
+          </Card>
+        </div>
       </div>
+      <AppFooter />
 
       {showForgot && (
         <Modal
@@ -475,8 +543,7 @@ export default function Login() {
             />
 
             <p className="text-[12px] text-slate-500 leading-relaxed">
-              The backend returns the reset token for now, so you can finish the
-              reset flow directly in the app.
+              Check your inbox for the reset code. It expires in 30 minutes.
             </p>
           </div>
         </Modal>

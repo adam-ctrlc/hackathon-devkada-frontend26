@@ -12,10 +12,12 @@ import {
   setAuthSession,
 } from "../../../lib/auth-session.js";
 import { BudgetSkeleton } from "../components/RouteSkeletons.jsx";
+import { usePageTitle } from "../../../hooks/usePageTitle.js";
 
 const todayInput = () => new Date().toISOString().slice(0, 10);
 
 export default function Budget() {
+  usePageTitle("Budget");
   const navigate = useNavigate();
   const session = getAuthSession();
   const profileId = session?.profile?.id;

@@ -36,8 +36,10 @@ import {
 } from "../../../utils/diary.js";
 import { DiaryLockModal } from "./components/DiaryLockModal.jsx";
 import { DiarySkeleton } from "../components/RouteSkeletons.jsx";
+import { usePageTitle } from "../../../hooks/usePageTitle.js";
 
 export default function Diary() {
+  usePageTitle("Diary");
   const navigate = useNavigate();
   const [entries, setEntries] = useState([]);
   const [activeId, setActiveId] = useState(null);

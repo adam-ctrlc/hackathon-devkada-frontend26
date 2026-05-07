@@ -19,10 +19,7 @@ const buildCsp = (env) => {
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
-    [
-      "img-src 'self' data: blob: https://challenges.cloudflare.com",
-      extraImg,
-    ]
+    ["img-src 'self' data: blob: https://challenges.cloudflare.com", extraImg]
       .filter(Boolean)
       .join(" "),
     [
@@ -56,11 +53,41 @@ export default defineConfig(({ mode }) => {
         },
       },
     ],
+
     server: {
-      headers: { "Content-Security-Policy": csp },
+      host: "0.0.0.0",
+      port: 5173,
+      allowedHosts: [
+        "localhost",
+        "10.97.119.212",
+        ".trycloudflare.com",
+
+        // Add your custom Cloudflare domain here if you have one:
+        // "your-domain.com",
+        // "www.your-domain.com",
+        // "app.your-domain.com",
+      ],
+      headers: {
+        "Content-Security-Policy": csp,
+      },
     },
+
     preview: {
-      headers: { "Content-Security-Policy": csp },
+      host: "0.0.0.0",
+      port: 4173,
+      allowedHosts: [
+        "localhost",
+        "10.97.119.212",
+        ".trycloudflare.com",
+
+        // Add your custom Cloudflare domain here if you have one:
+        // "your-domain.com",
+        // "www.your-domain.com",
+        // "app.your-domain.com",
+      ],
+      headers: {
+        "Content-Security-Policy": csp,
+      },
     },
   };
 });

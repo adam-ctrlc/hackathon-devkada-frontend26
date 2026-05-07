@@ -21,8 +21,10 @@ import { SwapDetailModal } from "./components/SwapDetailModal.jsx";
 import { SwapTable } from "./components/SwapTable.jsx";
 import { PAGE_SIZE, mapStoredSwaps, statusLabel } from "../../../utils/swap.js";
 import { SwapSkeleton } from "../components/RouteSkeletons.jsx";
+import { usePageTitle } from "../../../hooks/usePageTitle.js";
 
 export default function Swap() {
+  usePageTitle("Food Swaps");
   const navigate = useNavigate();
   const [swaps, setSwaps] = useState([]);
   const [aiNote, setAiNote] = useState("");

@@ -18,6 +18,7 @@ import { apiRequest } from "../../../lib/api.js";
 import { clearAuthSession, getAuthSession } from "../../../lib/auth-session.js";
 import { MiniBars } from "./components/MiniBars.jsx";
 import { InsightsSkeleton } from "../components/RouteSkeletons.jsx";
+import { usePageTitle } from "../../../hooks/usePageTitle.js";
 
 const dayLabel = (date) =>
   new Intl.DateTimeFormat("en-US", { weekday: "short" }).format(new Date(date));
@@ -28,6 +29,7 @@ const mealPeriodLabel = (value) => {
 };
 
 export default function Insights() {
+  usePageTitle("Insights");
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);

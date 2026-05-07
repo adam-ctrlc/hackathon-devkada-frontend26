@@ -3,7 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { Card } from "../../../components/ui/Card.jsx";
 import { Button } from "../../../components/ui/Button.jsx";
 import { Input, Field } from "../../../components/ui/Input.jsx";
-import { Check, CheckCircle, X, Sparkle, ArrowsClockwise } from "@phosphor-icons/react";
+import {
+  Check,
+  CheckCircle,
+  X,
+  Sparkle,
+  ArrowsClockwise,
+} from "@phosphor-icons/react";
 import { apiRequest } from "../../../lib/api.js";
 import { runGeminiLiveJson } from "../../../lib/gemini-live.js";
 import {
@@ -18,6 +24,7 @@ import {
   statusToOptionId,
 } from "../../../data/status-options.jsx";
 import { StatusSkeleton } from "../components/RouteSkeletons.jsx";
+import { usePageTitle } from "../../../hooks/usePageTitle.js";
 
 const buildRefinePrompt = ({ notes, customRestriction, profile }) => {
   const ctx = {
@@ -53,6 +60,7 @@ Return JSON only:
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function Status() {
+  usePageTitle("Health Status");
   const navigate = useNavigate();
   const [profile, setProfile] = useState(() => getAuthSession()?.profile ?? {});
   const [profileId] = useState(() => getAuthSession()?.profile?.id ?? "");
@@ -160,7 +168,8 @@ export default function Status() {
           setNotes(finalNotes);
         }
         if (refined?.customRestriction !== undefined) {
-          finalRestriction = String(refined.customRestriction ?? "").trim() || customRestriction;
+          finalRestriction =
+            String(refined.customRestriction ?? "").trim() || customRestriction;
           setCustom(finalRestriction);
         }
       } catch {
@@ -246,11 +255,20 @@ export default function Status() {
               <X size={13} /> Discard
             </Button>
           )}
-          <Button variant="primary" size="sm" onClick={save} disabled={!dirty || refining}>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={save}
+            disabled={!dirty || refining}
+          >
             {refining ? (
-              <><ArrowsClockwise size={13} className="animate-spin" /> Refining…</>
+              <>
+                <ArrowsClockwise size={13} className="animate-spin" /> Refining…
+              </>
             ) : (
-              <><Check size={14} /> Save status</>
+              <>
+                <Check size={14} /> Save status
+              </>
             )}
           </Button>
         </div>
@@ -324,7 +342,8 @@ export default function Status() {
                 {notes.trim() && (
                   <p className="text-[11px] text-brand-600 flex items-center gap-1 font-medium">
                     <Sparkle size={10} weight="fill" />
-                    AI will fix grammar and personalize this using your profile before saving
+                    AI will fix grammar and personalize this using your profile
+                    before saving
                   </p>
                 )}
                 <p className="text-[11px] text-slate-500">
@@ -347,7 +366,8 @@ export default function Status() {
                 {customRestriction.trim() && (
                   <p className="text-[11px] text-brand-600 flex items-center gap-1 font-medium">
                     <Sparkle size={10} weight="fill" />
-                    AI will rewrite this as a clear, specific restriction before saving
+                    AI will rewrite this as a clear, specific restriction before
+                    saving
                   </p>
                 )}
                 <p className="text-[11px] text-slate-500">

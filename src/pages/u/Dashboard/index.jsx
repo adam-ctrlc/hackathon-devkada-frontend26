@@ -25,8 +25,10 @@ import {
   formatDateLabel,
 } from "../../../utils/dashboard.js";
 import { DashboardSkeleton } from "../components/RouteSkeletons.jsx";
+import { usePageTitle } from "../../../hooks/usePageTitle.js";
 
 export default function Dashboard() {
+  usePageTitle("Dashboard");
   const navigate = useNavigate();
   const [dashboard, setDashboard] = useState(null);
   const [dashboardReflection, setDashboardReflection] = useState(null);

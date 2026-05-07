@@ -18,7 +18,10 @@ import { FilterModal } from "./components/FilterModal.jsx";
 import { ScanDetail } from "./components/ScanDetail.jsx";
 import { PAGE_SIZE, buildTargets, formatDate } from "../../../utils/history.js";
 import { HistorySkeleton } from "../components/RouteSkeletons.jsx";
+import { usePageTitle } from "../../../hooks/usePageTitle.js";
+
 export default function History() {
+  usePageTitle("History");
   const navigate = useNavigate();
   const session = getAuthSession();
   const profileId = session?.profile?.id;

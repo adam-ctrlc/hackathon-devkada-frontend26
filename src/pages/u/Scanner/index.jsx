@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { usePageTitle } from "../../../hooks/usePageTitle.js";
 import { useNavigate } from "react-router-dom";
 import { Card } from "../../../components/ui/Card.jsx";
 import { Button } from "../../../components/ui/Button.jsx";
@@ -118,6 +119,7 @@ const normalizeScannerInsights = (value, resultId, motivationFallback) => {
 };
 
 export default function Scanner() {
+  usePageTitle("Scanner");
   const navigate = useNavigate();
   const session = getAuthSession();
   const [profile, setProfile] = useState(session?.profile ?? null);
@@ -519,7 +521,11 @@ export default function Scanner() {
             ? `Found: ${productName} — analysing…`
             : `No product data found, sending to AI…`,
         );
-        const scan = await runBackendScan({ productName, barcode, productData });
+        const scan = await runBackendScan({
+          productName,
+          barcode,
+          productData,
+        });
         if (scan?.id) {
           attachScanImage(scan.id, file);
         }

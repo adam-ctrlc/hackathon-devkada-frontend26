@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { usePageTitle } from "../../../hooks/usePageTitle.js";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { Card } from "../../../components/ui/Card.jsx";
@@ -48,36 +49,70 @@ const tagItem = z
   .trim();
 
 const tagsSchema = z.object({
-  allergies: z
-    .array(tagItem)
-    .max(15, "Maximum 15 allergies"),
-  dietRestrictions: z
-    .array(tagItem)
-    .max(15, "Maximum 15 diet restrictions"),
-  foodPreferences: z
-    .array(tagItem)
-    .max(20, "Maximum 20 food preferences"),
+  allergies: z.array(tagItem).max(15, "Maximum 15 allergies"),
+  dietRestrictions: z.array(tagItem).max(15, "Maximum 15 diet restrictions"),
+  foodPreferences: z.array(tagItem).max(20, "Maximum 20 food preferences"),
 });
 
 const ALLERGY_OPTIONS = [
-  "Nuts", "Peanuts", "Tree nuts", "Dairy", "Milk", "Eggs",
-  "Fish", "Shellfish", "Shrimp", "Wheat", "Gluten", "Soy",
-  "Sesame", "Mustard", "Sulphites",
+  "Nuts",
+  "Peanuts",
+  "Tree nuts",
+  "Dairy",
+  "Milk",
+  "Eggs",
+  "Fish",
+  "Shellfish",
+  "Shrimp",
+  "Wheat",
+  "Gluten",
+  "Soy",
+  "Sesame",
+  "Mustard",
+  "Sulphites",
 ];
 
 const RESTRICTION_OPTIONS = [
-  "Low sugar", "Low sodium", "Low fat", "Low carb", "Gluten-free",
-  "Dairy-free", "Vegan", "Vegetarian", "Keto", "Paleo",
-  "Halal", "Kosher", "Diabetic-friendly", "Lactose-free", "No pork",
+  "Low sugar",
+  "Low sodium",
+  "Low fat",
+  "Low carb",
+  "Gluten-free",
+  "Dairy-free",
+  "Vegan",
+  "Vegetarian",
+  "Keto",
+  "Paleo",
+  "Halal",
+  "Kosher",
+  "Diabetic-friendly",
+  "Lactose-free",
+  "No pork",
 ];
 
 const PREFERENCE_OPTIONS = [
-  "Salads", "Eggs", "Oats", "Rice", "Chicken", "Fish",
-  "Fruits", "Vegetables", "Whole grains", "Legumes", "Soup",
-  "Grilled foods", "Smoothies", "Nuts", "Yogurt",
+  "Salads",
+  "Eggs",
+  "Oats",
+  "Rice",
+  "Chicken",
+  "Fish",
+  "Fruits",
+  "Vegetables",
+  "Whole grains",
+  "Legumes",
+  "Soup",
+  "Grilled foods",
+  "Smoothies",
+  "Nuts",
+  "Yogurt",
 ];
 
-const buildTagValidationPrompt = ({ allergies, dietRestrictions, foodPreferences }) =>
+const buildTagValidationPrompt = ({
+  allergies,
+  dietRestrictions,
+  foodPreferences,
+}) =>
   `You are a food and health data validator. Check each item in the arrays below.
 
 Rules:
@@ -99,6 +134,7 @@ Return JSON only:
 }`;
 
 export default function Profile() {
+  usePageTitle("Profile");
   const navigate = useNavigate();
   const [loadedProfile, setLoadedProfile] = useState(null);
   const [metrics, setMetrics] = useState(null);
@@ -230,7 +266,8 @@ export default function Profile() {
           if (!Array.isArray(items)) return null;
           const invalid = items.filter((i) => !i.valid);
           if (invalid.length > 0) {
-            errs[key] = `Not recognized: ${invalid.map((i) => `"${i.original}"${i.reason ? ` (${i.reason})` : ""}`).join(", ")}`;
+            errs[key] =
+              `Not recognized: ${invalid.map((i) => `"${i.original}"${i.reason ? ` (${i.reason})` : ""}`).join(", ")}`;
           }
           return items
             .filter((i) => i.valid)
@@ -239,8 +276,14 @@ export default function Profile() {
         };
 
         const refinedAllergies = processField("allergies", result?.allergies);
-        const refinedRestrictions = processField("dietRestrictions", result?.dietRestrictions);
-        const refinedPreferences = processField("foodPreferences", result?.foodPreferences);
+        const refinedRestrictions = processField(
+          "dietRestrictions",
+          result?.dietRestrictions,
+        );
+        const refinedPreferences = processField(
+          "foodPreferences",
+          result?.foodPreferences,
+        );
 
         if (Object.keys(errs).length > 0) {
           setFieldErrors(errs);
@@ -421,11 +464,18 @@ export default function Profile() {
             disabled={!dirty || validating}
           >
             {validating ? (
-              <><ArrowsClockwise size={13} className="animate-spin" /> Validating…</>
+              <>
+                <ArrowsClockwise size={13} className="animate-spin" />{" "}
+                Validating…
+              </>
             ) : saved ? (
-              <><CheckCircle size={13} /> Saved</>
+              <>
+                <CheckCircle size={13} /> Saved
+              </>
             ) : (
-              <><Check size={14} /> Save profile</>
+              <>
+                <Check size={14} /> Save profile
+              </>
             )}
           </Button>
         </div>
@@ -516,8 +566,16 @@ export default function Profile() {
             </div>
             <TagSelect
               tags={form.allergies}
-              onAdd={(t) => { set("allergies", [...form.allergies, t]); setFieldErrors((e) => ({ ...e, allergies: null })); }}
-              onRemove={(t) => set("allergies", form.allergies.filter((a) => a !== t))}
+              onAdd={(t) => {
+                set("allergies", [...form.allergies, t]);
+                setFieldErrors((e) => ({ ...e, allergies: null }));
+              }}
+              onRemove={(t) =>
+                set(
+                  "allergies",
+                  form.allergies.filter((a) => a !== t),
+                )
+              }
               options={ALLERGY_OPTIONS}
               placeholder="Select an allergy…"
               colorClass="bg-red-50 text-red-700 ring-red-100"
@@ -540,8 +598,16 @@ export default function Profile() {
             </div>
             <TagSelect
               tags={form.dietRestrictions}
-              onAdd={(t) => { set("dietRestrictions", [...form.dietRestrictions, t]); setFieldErrors((e) => ({ ...e, dietRestrictions: null })); }}
-              onRemove={(t) => set("dietRestrictions", form.dietRestrictions.filter((r) => r !== t))}
+              onAdd={(t) => {
+                set("dietRestrictions", [...form.dietRestrictions, t]);
+                setFieldErrors((e) => ({ ...e, dietRestrictions: null }));
+              }}
+              onRemove={(t) =>
+                set(
+                  "dietRestrictions",
+                  form.dietRestrictions.filter((r) => r !== t),
+                )
+              }
               options={RESTRICTION_OPTIONS}
               placeholder="Select a restriction…"
               colorClass="bg-amber-50 text-amber-800 ring-amber-100"
@@ -751,51 +817,22 @@ export default function Profile() {
           <div className="mb-6">
             <TagSelect
               tags={form.foodPreferences}
-              onAdd={(t) => { set("foodPreferences", [...form.foodPreferences, t]); setFieldErrors((e) => ({ ...e, foodPreferences: null })); }}
-              onRemove={(t) => set("foodPreferences", form.foodPreferences.filter((p) => p !== t))}
+              onAdd={(t) => {
+                set("foodPreferences", [...form.foodPreferences, t]);
+                setFieldErrors((e) => ({ ...e, foodPreferences: null }));
+              }}
+              onRemove={(t) =>
+                set(
+                  "foodPreferences",
+                  form.foodPreferences.filter((p) => p !== t),
+                )
+              }
               options={PREFERENCE_OPTIONS}
               placeholder="Select a food preference…"
               colorClass="bg-slate-100 text-slate-700 ring-slate-200"
               error={fieldErrors.foodPreferences}
               disabled={validating}
             />
-          </div>
-
-          {/* Integrations */}
-          <div className="h-px bg-slate-100 mb-6" />
-          <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-3">
-            Integrations
-          </div>
-          <div className="space-y-3">
-            {[
-              {
-                label: "Sync with health app",
-                sub: "Pull steps, sleep, and heart rate from Apple Health or Google Fit.",
-                key: "syncHealth",
-              },
-            ].map((item) => (
-              <div
-                key={item.key}
-                className="flex items-center justify-between rounded-xl bg-slate-50 ring-1 ring-slate-200 p-4"
-              >
-                <div>
-                  <div className="font-medium text-[14px] text-slate-900">
-                    {item.label}
-                  </div>
-                  <div className="text-[12px] text-slate-500 mt-0.5">
-                    {item.sub}
-                  </div>
-                </div>
-                <button
-                  onClick={() => set(item.key, !form[item.key])}
-                  className={`relative w-11 h-6 rounded-full transition ${form[item.key] ? "bg-brand-600" : "bg-slate-200"}`}
-                >
-                  <span
-                    className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${form[item.key] ? "right-0.5" : "left-0.5"}`}
-                  />
-                </button>
-              </div>
-            ))}
           </div>
         </Card>
       </div>

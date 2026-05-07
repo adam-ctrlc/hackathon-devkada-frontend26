@@ -27,8 +27,10 @@ import {
   toneRing,
 } from "../../../utils/calendar.js";
 import { CalendarSkeleton } from "../components/RouteSkeletons.jsx";
+import { usePageTitle } from "../../../hooks/usePageTitle.js";
 
 export default function Calendar() {
+  usePageTitle("Calendar");
   const navigate = useNavigate();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());

@@ -44,8 +44,10 @@ import {
   mapSuggestion,
 } from "../../../utils/workout.js";
 import { WellnessLogSkeleton } from "../components/RouteSkeletons.jsx";
+import { usePageTitle } from "../../../hooks/usePageTitle.js";
 
 export default function Workout() {
+  usePageTitle("Workout");
   const navigate = useNavigate();
   const [logs, setLogs] = useState([]);
   const [waterLogs, setWaterLogs] = useState([]);

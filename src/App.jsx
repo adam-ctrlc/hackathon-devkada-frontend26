@@ -14,12 +14,18 @@ import Workout from "./pages/u/Workout/index.jsx";
 import Budget from "./pages/u/Budget/index.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
+import Landing from "./pages/Landing.jsx";
+import Terms from "./pages/Terms.jsx";
+import Privacy from "./pages/Privacy.jsx";
 
 export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Login />} />
+      <Route path="/landing" element={<Landing />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/privacy" element={<Privacy />} />
       <Route path="/u" element={<UserLayout />}>
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />

@@ -14,6 +14,7 @@ import {
 import { apiRequest } from "../../../lib/api.js";
 import { clearAuthSession, getAuthSession } from "../../../lib/auth-session.js";
 import { AllScansSkeleton } from "../components/RouteSkeletons.jsx";
+import { usePageTitle } from "../../../hooks/usePageTitle.js";
 
 const formatDate = (iso) => {
   const d = new Date(iso);
@@ -48,6 +49,7 @@ const mealPeriodLabel = (value) => {
 };
 
 export default function AllScans() {
+  usePageTitle("All Scans");
   const navigate = useNavigate();
   const session = getAuthSession();
   const profileId = session?.profile?.id;
