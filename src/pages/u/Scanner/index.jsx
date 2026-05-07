@@ -22,7 +22,7 @@ import {
   Trash,
   Basket,
 } from "@phosphor-icons/react";
-import { apiRequest } from "../../../lib/api.js";
+import { apiRequest, apiFormRequest } from "../../../lib/api.js";
 import {
   clearAuthSession,
   getAuthSession,
@@ -462,8 +462,10 @@ export default function Scanner() {
       showToast(`Scanned: ${data.scan.productName}`);
       setShowMentalCheckin(true);
       scrollToResult();
+      return data.scan;
     } catch (err) {
       showToast(err.message);
+      return null;
     } finally {
       setScanning(false);
     }
@@ -491,6 +493,16 @@ export default function Scanner() {
 
   const openImagePicker = () => fileRef.current?.click();
 
+  const attachScanImage = async (scanId, file) => {
+    try {
+      const form = new FormData();
+      form.append("image", file);
+      await apiFormRequest(`/scans/${scanId}/image`, { formData: form });
+    } catch {
+      // non-critical — scan is already saved
+    }
+  };
+
   const onFileChange = async (e) => {
     if (!e.target.files?.length) return;
     const file = e.target.files[0];
@@ -507,7 +519,10 @@ export default function Scanner() {
             ? `Found: ${productName} — analysing…`
             : `No product data found, sending to AI…`,
         );
-        await runBackendScan({ productName, barcode, productData });
+        const scan = await runBackendScan({ productName, barcode, productData });
+        if (scan?.id) {
+          attachScanImage(scan.id, file);
+        }
         return;
       }
       showToast("No barcode detected. Please upload a clear barcode image.");
