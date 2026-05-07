@@ -556,19 +556,23 @@ export default function Scanner() {
 
   const handleDeleteScan = async (scan) => {
     setDeletingIds((prev) => new Set(prev).add(scan.id));
+
+    const previousScans = scans;
+    const previousResult = result;
+    const nextScans = scans.filter((s) => s.id !== scan.id);
+    setScans(nextScans);
+    if (result?.id === scan.id) {
+      setResult(
+        nextScans.length ? buildResult(nextScans[0], nextScans, targets) : null,
+      );
+    }
+
     try {
       await apiRequest(`/scans/${scan.id}`, { method: "DELETE" });
-      const nextScans = scans.filter((s) => s.id !== scan.id);
-      setScans(nextScans);
-      if (result?.id === scan.id) {
-        setResult(
-          nextScans.length
-            ? buildResult(nextScans[0], nextScans, targets)
-            : null,
-        );
-      }
       showToast(`Deleted: ${scan.productName}`);
     } catch (err) {
+      setScans(previousScans);
+      setResult(previousResult);
       showToast(err.message);
     } finally {
       setDeletingIds((prev) => {
