@@ -1,0 +1,647 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Card } from "../../../components/ui/Card.jsx";
+import { Button } from "../../../components/ui/Button.jsx";
+import { Input, Field } from "../../../components/ui/Input.jsx";
+import { Select } from "../../../components/Select.jsx";
+import {
+  Check,
+  PencilSimple,
+  Lock,
+  CheckCircle,
+  CurrencyCircleDollar,
+  User,
+  Scales,
+  Heart,
+} from "@phosphor-icons/react";
+import { apiRequest, formatApiError } from "../../../lib/api.js";
+import {
+  clearAuthSession,
+  getAuthSession,
+  setAuthSession,
+} from "../../../lib/auth-session.js";
+import {
+  getStatusBlockReason,
+  statusToOptionId,
+} from "../../../data/status-options.jsx";
+import { AvatarModal } from "./components/AvatarModal.jsx";
+import { PinModal } from "./components/PinModal.jsx";
+import { TagEditor } from "./components/TagEditor.jsx";
+import {
+  ACTIVITY_LEVELS,
+  CURRENCIES,
+  DIET_PATTERNS,
+  HEALTH_GOALS,
+  emptyProfileForm,
+  formFromProfile,
+} from "../../../utils/profile.js";
+import { ProfileSkeleton } from "../components/RouteSkeletons.jsx";
+
+export default function Profile() {
+  const navigate = useNavigate();
+  const [loadedProfile, setLoadedProfile] = useState(null);
+  const [metrics, setMetrics] = useState(null);
+  const [form, setForm] = useState(emptyProfileForm);
+  const [loading, setLoading] = useState(true);
+  const [dirty, setDirty] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [showPin, setShowPin] = useState(false);
+  const [showAvatar, setShowAvatar] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2500);
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    const session = getAuthSession();
+    const profileId = session?.profile?.id;
+
+    if (!profileId) {
+      navigate("/", { replace: true });
+      return;
+    }
+
+    const loadProfile = async () => {
+      setLoading(true);
+      try {
+        const data = await apiRequest(`/profiles/${profileId}`);
+        if (cancelled) return;
+        setLoadedProfile(data.profile);
+        setMetrics(data.metrics);
+        setForm(formFromProfile(data.profile));
+        const currentSession = getAuthSession();
+        if (currentSession) {
+          setAuthSession({
+            ...currentSession,
+            profile: { ...currentSession.profile, ...data.profile },
+          });
+        }
+        setDirty(false);
+      } catch (err) {
+        if (String(err.message).toLowerCase().includes("profile not found")) {
+          clearAuthSession();
+          navigate("/", { replace: true });
+          return;
+        }
+        if (!cancelled) showToast(err.message);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    loadProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate]);
+
+  const set = (key, val) => {
+    setForm((f) => ({ ...f, [key]: val }));
+    setDirty(true);
+    setSaved(false);
+  };
+
+  const syncProfileState = (nextProfile) => {
+    setLoadedProfile(nextProfile);
+    const currentSession = getAuthSession();
+    if (currentSession) {
+      setAuthSession({
+        ...currentSession,
+        profile: { ...currentSession.profile, ...nextProfile },
+      });
+    }
+  };
+
+  const saveProfile = async () => {
+    const profileId = loadedProfile?.id;
+    if (!profileId) return;
+
+    try {
+      const data = await apiRequest(`/profiles/${profileId}`, {
+        method: "PATCH",
+        body: {
+          firstName: form.firstName,
+          middleName: form.middleName,
+          lastName: form.lastName,
+          email: form.email,
+          age: form.age === "" ? undefined : Number(form.age),
+          sex: form.sex,
+          heightCm: form.heightCm === "" ? undefined : Number(form.heightCm),
+          weightKg: form.weightKg === "" ? undefined : Number(form.weightKg),
+          activityLevel: form.activityLevel,
+          healthGoal: form.healthGoal,
+          allergies: form.allergies,
+          foodPreferences: form.foodPreferences,
+          dietRestrictions: form.dietRestrictions,
+          budgetAmount:
+            form.budgetAmount === "" ? undefined : Number(form.budgetAmount),
+          budgetCurrency: form.budgetCurrency,
+          budgetFrequency: form.budgetFrequency,
+        },
+      });
+      let nextProfile = data.profile;
+      const currentStatusId = statusToOptionId(
+        loadedProfile?.healthContext?.status,
+      );
+      const statusBlockReason = getStatusBlockReason(currentStatusId, {
+        ...nextProfile,
+        sex: form.sex,
+      });
+
+      if (statusBlockReason && currentStatusId !== "none") {
+        const healthData = await apiRequest("/health-context", {
+          method: "POST",
+          body: {
+            profileId,
+            status: "No active condition",
+            notes: loadedProfile?.healthContext?.notes ?? "",
+            customRestriction:
+              loadedProfile?.healthContext?.customRestriction ?? "",
+          },
+        });
+        nextProfile = {
+          ...nextProfile,
+          healthContext: healthData.healthContext,
+        };
+      }
+
+      syncProfileState(nextProfile);
+      setForm(formFromProfile(nextProfile));
+      setSaved(true);
+      setDirty(false);
+      showToast(
+        statusBlockReason && currentStatusId !== "none"
+          ? "Profile saved. Incompatible health status was cleared."
+          : "Profile saved",
+      );
+    } catch (err) {
+      showToast(formatApiError(err));
+    }
+  };
+
+  const discard = () => {
+    if (loadedProfile) setForm(formFromProfile(loadedProfile));
+    setDirty(false);
+    setSaved(false);
+  };
+
+  // Derived BMI
+  const bmi =
+    form.heightCm && form.weightKg
+      ? (form.weightKg / (form.heightCm / 100) ** 2).toFixed(1)
+      : (metrics?.bmi ?? "");
+  const bmiLabel =
+    bmi < 18.5
+      ? "Underweight"
+      : bmi < 25
+        ? "Healthy"
+        : bmi < 30
+          ? "Overweight"
+          : "Obese";
+  const bmiColor =
+    bmi < 18.5
+      ? "text-amber-600"
+      : bmi < 25
+        ? "text-emerald-600"
+        : "text-red-600";
+
+  const initials = `${form.firstName[0] ?? ""}${form.lastName[0] ?? ""}`;
+
+  if (loading) {
+    return (
+      <div className="px-4 sm:px-6 lg:px-10 py-6 lg:py-8 max-w-[1180px]">
+        <ProfileSkeleton />
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-4 sm:px-6 lg:px-10 py-6 lg:py-8 max-w-[1180px] relative">
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-[13px] font-medium px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2">
+          <CheckCircle size={14} className="text-emerald-400" /> {toast}
+        </div>
+      )}
+
+      {showPin && (
+        <PinModal
+          key={`${loadedProfile?.id ?? "profile"}-${loadedProfile?.diaryLocked ? "locked" : "unlocked"}`}
+          profileId={loadedProfile?.id}
+          diaryLocked={Boolean(loadedProfile?.diaryLocked)}
+          onSaved={(nextProfile) => {
+            if (!nextProfile) return;
+            syncProfileState(nextProfile);
+            showToast(
+              nextProfile.diaryLocked ? "Diary PIN saved" : "Diary PIN updated",
+            );
+          }}
+          onClose={() => setShowPin(false)}
+        />
+      )}
+      {showAvatar && (
+        <AvatarModal initials={initials} onClose={() => setShowAvatar(false)} />
+      )}
+
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-7">
+        <div>
+          <div className="text-[11px] tracking-[0.18em] uppercase text-brand-600 font-semibold mb-2">
+            Personal Health Profile
+          </div>
+          <h1 className="font-display text-[34px] leading-[1.05] tracking-tight text-slate-900">
+            About your body
+          </h1>
+          <p className="text-slate-600 mt-2 max-w-[560px]">
+            The more we know, the more personalized the AI guidance becomes.
+            Everything stays on your device.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          {dirty && (
+            <Button variant="ghost" size="sm" onClick={discard}>
+              Discard
+            </Button>
+          )}
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={saveProfile}
+            disabled={!dirty}
+          >
+            {saved ? (
+              <>
+                <CheckCircle size={13} /> Saved
+              </>
+            ) : (
+              <>
+                <Check size={14} /> Save profile
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        {/* Left sidebar */}
+        <div className="lg:col-span-4 space-y-5">
+          {/* Avatar + stats */}
+          <Card className="p-6">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setShowAvatar(true)}
+                className="w-16 h-16 rounded-full bg-brand-100 grid place-items-center font-display text-[22px] text-brand-700 hover:bg-brand-200 transition relative group shrink-0"
+              >
+                {initials}
+                <span className="absolute inset-0 rounded-full bg-black/20 opacity-0 group-hover:opacity-100 transition grid place-items-center text-white">
+                  <PencilSimple size={16} />
+                </span>
+              </button>
+              <div className="min-w-0">
+                <div className="font-display text-[20px] leading-tight text-slate-900 truncate">
+                  {form.firstName}{" "}
+                  {form.middleName ? form.middleName[0] + ". " : ""}
+                  {form.lastName}
+                </div>
+                <div className="text-[12px] text-slate-500">
+                  {form.sex === "FEMALE" ? "Female" : "Male"} · {form.age} ·{" "}
+                  {form.email}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
+              {[
+                {
+                  label: "BMI",
+                  value: bmi.toString(),
+                  sub: bmiLabel,
+                  subColor: bmiColor,
+                },
+                {
+                  label: "kcal/day",
+                  value: (metrics?.calorieTarget ?? 0).toLocaleString(),
+                  sub: "target",
+                  subColor: "text-slate-500",
+                },
+                {
+                  label: "Protein",
+                  value: `${Math.max(1, Math.round((form.weightKg || 60) * 1.2))}g`,
+                  sub: "daily",
+                  subColor: "text-slate-500",
+                },
+              ].map((s) => (
+                <div
+                  key={s.label}
+                  className="rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200"
+                >
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
+                    {s.label}
+                  </div>
+                  <div className="font-display text-[20px] text-slate-900">
+                    {s.value}
+                  </div>
+                  <div className={`text-[10px] font-medium ${s.subColor}`}>
+                    {s.sub}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-[11px] text-slate-500 leading-relaxed mt-4">
+              BMI and calorie targets are general estimates. Consult your doctor
+              for medical advice.
+            </p>
+          </Card>
+
+          {/* Allergies */}
+          <Card className="p-5">
+            <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-3">
+              <Heart size={12} /> Allergies
+            </div>
+            <TagEditor
+              tags={form.allergies}
+              onAdd={(t) => set("allergies", [...form.allergies, t])}
+              onRemove={(t) =>
+                set(
+                  "allergies",
+                  form.allergies.filter((a) => a !== t),
+                )
+              }
+              placeholder="Add allergy"
+              colorClass="bg-red-50 text-red-700 ring-red-100"
+            />
+          </Card>
+
+          {/* Diet restrictions */}
+          <Card className="p-5">
+            <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-3">
+              <Scales size={12} /> Diet restrictions
+            </div>
+            <TagEditor
+              tags={form.dietRestrictions}
+              onAdd={(t) =>
+                set("dietRestrictions", [...form.dietRestrictions, t])
+              }
+              onRemove={(t) =>
+                set(
+                  "dietRestrictions",
+                  form.dietRestrictions.filter((r) => r !== t),
+                )
+              }
+              placeholder="Add restriction"
+              colorClass="bg-amber-50 text-amber-800 ring-amber-100"
+            />
+          </Card>
+
+          {/* Budget */}
+          <Card className="p-5">
+            <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-3">
+              <CurrencyCircleDollar size={12} /> Food budget
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+              <Field label="Amount">
+                <Input
+                  type="number"
+                  min="0"
+                  value={form.budgetAmount}
+                  onChange={(e) => set("budgetAmount", e.target.value)}
+                  placeholder="e.g. 3000"
+                />
+              </Field>
+              <Field label="Currency">
+                <Select
+                  value={form.budgetCurrency}
+                  onChange={(e) => set("budgetCurrency", e.target.value)}
+                >
+                  {CURRENCIES.map((c) => (
+                    <option key={c}>{c}</option>
+                  ))}
+                </Select>
+              </Field>
+            </div>
+            <Field label="Frequency">
+              <Select
+                value={form.budgetFrequency}
+                onChange={(e) => set("budgetFrequency", e.target.value)}
+              >
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+              </Select>
+            </Field>
+          </Card>
+
+          {/* Security */}
+          <Card className="p-5">
+            <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-3">
+              <Lock size={12} /> Security
+            </div>
+            <div className="mb-2 text-[12px] text-slate-500">
+              {loadedProfile?.diaryLocked
+                ? "A PIN is protecting your diary."
+                : "No diary PIN is set yet."}
+            </div>
+            <button
+              onClick={() => setShowPin(true)}
+              className="w-full h-10 rounded-lg bg-slate-50 ring-1 ring-slate-200 text-[13px] text-slate-700 font-medium hover:bg-slate-100 transition flex items-center gap-2 px-3"
+            >
+              <Lock size={14} className="text-slate-400" />{" "}
+              {loadedProfile?.diaryLocked
+                ? "Change diary PIN"
+                : "Create diary PIN"}
+            </button>
+          </Card>
+        </div>
+
+        {/* Main form */}
+        <Card className="lg:col-span-8 p-6">
+          {/* Personal info */}
+          <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-4">
+            <User size={12} /> Personal information
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <Field label="First name">
+              <Input
+                value={form.firstName}
+                onChange={(e) => set("firstName", e.target.value)}
+              />
+            </Field>
+            <Field label="Middle name">
+              <Input
+                value={form.middleName}
+                onChange={(e) => set("middleName", e.target.value)}
+                placeholder="Optional"
+              />
+            </Field>
+            <Field label="Last name">
+              <Input
+                value={form.lastName}
+                onChange={(e) => set("lastName", e.target.value)}
+              />
+            </Field>
+            <Field label="Email">
+              <Input
+                type="email"
+                value={form.email}
+                onChange={(e) => set("email", e.target.value)}
+              />
+            </Field>
+            <Field label="Age">
+              <Input
+                type="number"
+                min="1"
+                max="120"
+                value={form.age}
+                onChange={(e) => set("age", parseInt(e.target.value) || "")}
+              />
+            </Field>
+            <Field label="Sex">
+              <Select
+                value={form.sex}
+                onChange={(e) => set("sex", e.target.value)}
+              >
+                <option value="FEMALE">Female</option>
+                <option value="MALE">Male</option>
+                <option value="OTHER">Prefer not to say</option>
+              </Select>
+            </Field>
+          </div>
+
+          {/* Body metrics */}
+          <div className="h-px bg-slate-100 mb-6" />
+          <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-4">
+            <Scales size={12} /> Body metrics
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            <Field label="Height" hint="cm">
+              <Input
+                type="number"
+                min="100"
+                max="250"
+                value={form.heightCm}
+                onChange={(e) =>
+                  set("heightCm", parseInt(e.target.value) || "")
+                }
+              />
+            </Field>
+            <Field label="Weight" hint="kg">
+              <Input
+                type="number"
+                min="20"
+                max="300"
+                step="0.1"
+                value={form.weightKg}
+                onChange={(e) =>
+                  set("weightKg", parseFloat(e.target.value) || "")
+                }
+              />
+            </Field>
+            <Field label="Activity level">
+              <Select
+                value={form.activityLevel}
+                onChange={(e) => set("activityLevel", e.target.value)}
+              >
+                {ACTIVITY_LEVELS.map((l) => (
+                  <option key={l}>{l}</option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="Diet pattern">
+              <Select
+                value={form.dietPattern}
+                onChange={(e) => set("dietPattern", e.target.value)}
+              >
+                {DIET_PATTERNS.map((d) => (
+                  <option key={d}>{d}</option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+
+          {/* Health goal */}
+          <div className="h-px bg-slate-100 mb-6" />
+          <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-3">
+            Health goal
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-6">
+            {HEALTH_GOALS.map((g) => (
+              <button
+                key={g}
+                onClick={() => set("healthGoal", g)}
+                className={`h-10 px-3 rounded-lg text-[13px] font-medium ring-1 transition
+                  ${g === form.healthGoal ? "bg-brand-600 text-white ring-brand-600" : "bg-white ring-slate-200 hover:bg-slate-50 text-slate-700"}`}
+              >
+                {g === form.healthGoal && (
+                  <Check size={12} className="inline mr-1.5 -mt-0.5" />
+                )}
+                {g}
+              </button>
+            ))}
+          </div>
+
+          {/* Food preferences */}
+          <div className="h-px bg-slate-100 mb-6" />
+          <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-3">
+            Food preferences
+          </div>
+          <div className="mb-6">
+            <TagEditor
+              tags={form.foodPreferences}
+              onAdd={(t) =>
+                set("foodPreferences", [...form.foodPreferences, t])
+              }
+              onRemove={(t) =>
+                set(
+                  "foodPreferences",
+                  form.foodPreferences.filter((p) => p !== t),
+                )
+              }
+              placeholder="Add preference"
+              colorClass="bg-slate-100 text-slate-700 ring-slate-200"
+            />
+          </div>
+
+          {/* Integrations */}
+          <div className="h-px bg-slate-100 mb-6" />
+          <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-3">
+            Integrations
+          </div>
+          <div className="space-y-3">
+            {[
+              {
+                label: "Sync with health app",
+                sub: "Pull steps, sleep, and heart rate from Apple Health or Google Fit.",
+                key: "syncHealth",
+              },
+            ].map((item) => (
+              <div
+                key={item.key}
+                className="flex items-center justify-between rounded-xl bg-slate-50 ring-1 ring-slate-200 p-4"
+              >
+                <div>
+                  <div className="font-medium text-[14px] text-slate-900">
+                    {item.label}
+                  </div>
+                  <div className="text-[12px] text-slate-500 mt-0.5">
+                    {item.sub}
+                  </div>
+                </div>
+                <button
+                  onClick={() => set(item.key, !form[item.key])}
+                  className={`relative w-11 h-6 rounded-full transition ${form[item.key] ? "bg-brand-600" : "bg-slate-200"}`}
+                >
+                  <span
+                    className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${form[item.key] ? "right-0.5" : "left-0.5"}`}
+                  />
+                </button>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}
