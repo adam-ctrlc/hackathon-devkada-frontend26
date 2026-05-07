@@ -16,7 +16,7 @@ export function ScannerSwapSection({
 
   return (
     <div className="border-t border-slate-200 bg-white">
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="mb-4">
           <div>
             <div className="text-[11px] uppercase tracking-wider text-brand-600 font-semibold mb-1">
@@ -32,7 +32,7 @@ export function ScannerSwapSection({
           </div>
         </div>
 
-        <div className="border-b border-slate-200 bg-slate-50 -mx-6 px-6">
+        <div className="border-b border-slate-200 bg-slate-50 -mx-6 px-3 sm:px-6 flex overflow-x-auto">
           {[
             ["overview", "Overview"],
             ["why", "Why this score"],
@@ -42,7 +42,7 @@ export function ScannerSwapSection({
               key={key}
               type="button"
               onClick={() => setActiveTab(key)}
-              className={`h-11 px-4 text-[13px] font-medium border-b-2 -mb-px transition ${
+              className={`shrink-0 h-11 px-4 text-[13px] font-medium border-b-2 -mb-px transition ${
                 activeTab === key
                   ? "border-brand-600 text-brand-700"
                   : "border-transparent text-slate-500 hover:text-slate-700"
@@ -55,11 +55,11 @@ export function ScannerSwapSection({
 
         {activeTab === "overview" && (
           <div className="mt-5 rounded-2xl bg-slate-50 ring-1 ring-slate-200 p-4">
-            <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 mb-3">
               <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
                 Swap recommendation
               </div>
-              <div className="flex shrink-0 justify-end gap-2">
+              <div className="flex gap-2">
                 <Button
                   variant="ghost"
                   size="sm"

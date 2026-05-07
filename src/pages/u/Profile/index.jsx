@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { z } from "zod";
 import { Card } from "../../../components/ui/Card.jsx";
 import { Button } from "../../../components/ui/Button.jsx";
 import { Input, Field } from "../../../components/ui/Input.jsx";
@@ -13,8 +14,11 @@ import {
   User,
   Scales,
   Heart,
+  Sparkle,
+  ArrowsClockwise,
 } from "@phosphor-icons/react";
 import { apiRequest, formatApiError } from "../../../lib/api.js";
+import { runGeminiLiveJson } from "../../../lib/gemini-live.js";
 import {
   clearAuthSession,
   getAuthSession,
@@ -26,7 +30,7 @@ import {
 } from "../../../data/status-options.jsx";
 import { AvatarModal } from "./components/AvatarModal.jsx";
 import { PinModal } from "./components/PinModal.jsx";
-import { TagEditor } from "./components/TagEditor.jsx";
+import { TagSelect } from "./components/TagSelect.jsx";
 import {
   ACTIVITY_LEVELS,
   CURRENCIES,
@@ -37,6 +41,63 @@ import {
 } from "../../../utils/profile.js";
 import { ProfileSkeleton } from "../components/RouteSkeletons.jsx";
 
+const tagItem = z
+  .string()
+  .min(1, "Item cannot be empty")
+  .max(60, "Too long — keep it under 60 characters")
+  .trim();
+
+const tagsSchema = z.object({
+  allergies: z
+    .array(tagItem)
+    .max(15, "Maximum 15 allergies"),
+  dietRestrictions: z
+    .array(tagItem)
+    .max(15, "Maximum 15 diet restrictions"),
+  foodPreferences: z
+    .array(tagItem)
+    .max(20, "Maximum 20 food preferences"),
+});
+
+const ALLERGY_OPTIONS = [
+  "Nuts", "Peanuts", "Tree nuts", "Dairy", "Milk", "Eggs",
+  "Fish", "Shellfish", "Shrimp", "Wheat", "Gluten", "Soy",
+  "Sesame", "Mustard", "Sulphites",
+];
+
+const RESTRICTION_OPTIONS = [
+  "Low sugar", "Low sodium", "Low fat", "Low carb", "Gluten-free",
+  "Dairy-free", "Vegan", "Vegetarian", "Keto", "Paleo",
+  "Halal", "Kosher", "Diabetic-friendly", "Lactose-free", "No pork",
+];
+
+const PREFERENCE_OPTIONS = [
+  "Salads", "Eggs", "Oats", "Rice", "Chicken", "Fish",
+  "Fruits", "Vegetables", "Whole grains", "Legumes", "Soup",
+  "Grilled foods", "Smoothies", "Nuts", "Yogurt",
+];
+
+const buildTagValidationPrompt = ({ allergies, dietRestrictions, foodPreferences }) =>
+  `You are a food and health data validator. Check each item in the arrays below.
+
+Rules:
+- allergies: must be real food allergens (e.g. nuts, dairy, shellfish). Reject random words or non-food items.
+- dietRestrictions: must be real dietary restrictions (e.g. low sugar, gluten-free, vegan). Reject nonsense.
+- foodPreferences: must be real food items, ingredients, or food categories (e.g. salads, oats, chicken). Reject non-food items.
+
+For VALID items: return a "refined" name (fix spelling/casing, e.g. "tomatos" → "Tomatoes", "EGGS" → "Eggs").
+For INVALID items: mark as invalid and give a short reason.
+
+Input:
+${JSON.stringify({ allergies, dietRestrictions, foodPreferences }, null, 2)}
+
+Return JSON only:
+{
+  "allergies": [{ "original": "...", "refined": "...", "valid": true }],
+  "dietRestrictions": [{ "original": "...", "refined": "...", "valid": true }],
+  "foodPreferences": [{ "original": "...", "refined": "...", "valid": true, "reason": "" }]
+}`;
+
 export default function Profile() {
   const navigate = useNavigate();
   const [loadedProfile, setLoadedProfile] = useState(null);
@@ -45,6 +106,8 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [dirty, setDirty] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [validating, setValidating] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
   const [showPin, setShowPin] = useState(false);
   const [showAvatar, setShowAvatar] = useState(false);
   const [toast, setToast] = useState(null);
@@ -120,6 +183,91 @@ export default function Profile() {
     const profileId = loadedProfile?.id;
     if (!profileId) return;
 
+    // Zod validation
+    const zodResult = tagsSchema.safeParse({
+      allergies: form.allergies,
+      dietRestrictions: form.dietRestrictions,
+      foodPreferences: form.foodPreferences,
+    });
+    if (!zodResult.success) {
+      const errs = {};
+      for (const issue of zodResult.error.issues) {
+        const field = issue.path[0];
+        if (field && !errs[field]) errs[field] = issue.message;
+      }
+      setFieldErrors(errs);
+      showToast("Please fix the errors before saving");
+      return;
+    }
+    setFieldErrors({});
+
+    // AI validation — only if any tag fields are non-empty
+    const hasTagItems =
+      form.allergies.length > 0 ||
+      form.dietRestrictions.length > 0 ||
+      form.foodPreferences.length > 0;
+
+    let finalAllergies = form.allergies;
+    let finalRestrictions = form.dietRestrictions;
+    let finalPreferences = form.foodPreferences;
+
+    if (hasTagItems) {
+      setValidating(true);
+      showToast("AI is validating your entries…");
+      try {
+        const result = await runGeminiLiveJson({
+          prompt: buildTagValidationPrompt({
+            allergies: form.allergies,
+            dietRestrictions: form.dietRestrictions,
+            foodPreferences: form.foodPreferences,
+          }),
+          temperature: 0.1,
+          timeoutMs: 60000,
+        });
+
+        const errs = {};
+        const processField = (key, items) => {
+          if (!Array.isArray(items)) return null;
+          const invalid = items.filter((i) => !i.valid);
+          if (invalid.length > 0) {
+            errs[key] = `Not recognized: ${invalid.map((i) => `"${i.original}"${i.reason ? ` (${i.reason})` : ""}`).join(", ")}`;
+          }
+          return items
+            .filter((i) => i.valid)
+            .map((i) => String(i.refined || i.original).trim())
+            .filter(Boolean);
+        };
+
+        const refinedAllergies = processField("allergies", result?.allergies);
+        const refinedRestrictions = processField("dietRestrictions", result?.dietRestrictions);
+        const refinedPreferences = processField("foodPreferences", result?.foodPreferences);
+
+        if (Object.keys(errs).length > 0) {
+          setFieldErrors(errs);
+          setValidating(false);
+          showToast("Some entries were rejected — see errors below");
+          return;
+        }
+
+        if (refinedAllergies) {
+          finalAllergies = refinedAllergies;
+          set("allergies", refinedAllergies);
+        }
+        if (refinedRestrictions) {
+          finalRestrictions = refinedRestrictions;
+          set("dietRestrictions", refinedRestrictions);
+        }
+        if (refinedPreferences) {
+          finalPreferences = refinedPreferences;
+          set("foodPreferences", refinedPreferences);
+        }
+      } catch {
+        // AI failed — proceed with raw values
+      } finally {
+        setValidating(false);
+      }
+    }
+
     try {
       const data = await apiRequest(`/profiles/${profileId}`, {
         method: "PATCH",
@@ -134,9 +282,9 @@ export default function Profile() {
           weightKg: form.weightKg === "" ? undefined : Number(form.weightKg),
           activityLevel: form.activityLevel,
           healthGoal: form.healthGoal,
-          allergies: form.allergies,
-          foodPreferences: form.foodPreferences,
-          dietRestrictions: form.dietRestrictions,
+          allergies: finalAllergies,
+          foodPreferences: finalPreferences,
+          dietRestrictions: finalRestrictions,
           budgetAmount:
             form.budgetAmount === "" ? undefined : Number(form.budgetAmount),
           budgetCurrency: form.budgetCurrency,
@@ -261,7 +409,7 @@ export default function Profile() {
           </p>
         </div>
         <div className="flex gap-2">
-          {dirty && (
+          {dirty && !validating && (
             <Button variant="ghost" size="sm" onClick={discard}>
               Discard
             </Button>
@@ -270,16 +418,14 @@ export default function Profile() {
             variant="primary"
             size="sm"
             onClick={saveProfile}
-            disabled={!dirty}
+            disabled={!dirty || validating}
           >
-            {saved ? (
-              <>
-                <CheckCircle size={13} /> Saved
-              </>
+            {validating ? (
+              <><ArrowsClockwise size={13} className="animate-spin" /> Validating…</>
+            ) : saved ? (
+              <><CheckCircle size={13} /> Saved</>
             ) : (
-              <>
-                <Check size={14} /> Save profile
-              </>
+              <><Check size={14} /> Save profile</>
             )}
           </Button>
         </div>
@@ -358,41 +504,49 @@ export default function Profile() {
 
           {/* Allergies */}
           <Card className="p-5">
-            <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-3">
-              <Heart size={12} /> Allergies
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
+                <Heart size={12} /> Allergies
+              </div>
+              {form.allergies.length > 0 && (
+                <span className="text-[10px] text-brand-600 flex items-center gap-1 font-medium">
+                  <Sparkle size={9} weight="fill" /> AI will validate on save
+                </span>
+              )}
             </div>
-            <TagEditor
+            <TagSelect
               tags={form.allergies}
-              onAdd={(t) => set("allergies", [...form.allergies, t])}
-              onRemove={(t) =>
-                set(
-                  "allergies",
-                  form.allergies.filter((a) => a !== t),
-                )
-              }
-              placeholder="Add allergy"
+              onAdd={(t) => { set("allergies", [...form.allergies, t]); setFieldErrors((e) => ({ ...e, allergies: null })); }}
+              onRemove={(t) => set("allergies", form.allergies.filter((a) => a !== t))}
+              options={ALLERGY_OPTIONS}
+              placeholder="Select an allergy…"
               colorClass="bg-red-50 text-red-700 ring-red-100"
+              error={fieldErrors.allergies}
+              disabled={validating}
             />
           </Card>
 
           {/* Diet restrictions */}
           <Card className="p-5">
-            <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-3">
-              <Scales size={12} /> Diet restrictions
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
+                <Scales size={12} /> Diet restrictions
+              </div>
+              {form.dietRestrictions.length > 0 && (
+                <span className="text-[10px] text-brand-600 flex items-center gap-1 font-medium">
+                  <Sparkle size={9} weight="fill" /> AI will validate on save
+                </span>
+              )}
             </div>
-            <TagEditor
+            <TagSelect
               tags={form.dietRestrictions}
-              onAdd={(t) =>
-                set("dietRestrictions", [...form.dietRestrictions, t])
-              }
-              onRemove={(t) =>
-                set(
-                  "dietRestrictions",
-                  form.dietRestrictions.filter((r) => r !== t),
-                )
-              }
-              placeholder="Add restriction"
+              onAdd={(t) => { set("dietRestrictions", [...form.dietRestrictions, t]); setFieldErrors((e) => ({ ...e, dietRestrictions: null })); }}
+              onRemove={(t) => set("dietRestrictions", form.dietRestrictions.filter((r) => r !== t))}
+              options={RESTRICTION_OPTIONS}
+              placeholder="Select a restriction…"
               colorClass="bg-amber-50 text-amber-800 ring-amber-100"
+              error={fieldErrors.dietRestrictions}
+              disabled={validating}
             />
           </Card>
 
@@ -584,23 +738,26 @@ export default function Profile() {
 
           {/* Food preferences */}
           <div className="h-px bg-slate-100 mb-6" />
-          <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-3">
-            Food preferences
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
+              Food preferences
+            </div>
+            {form.foodPreferences.length > 0 && (
+              <span className="text-[10px] text-brand-600 flex items-center gap-1 font-medium">
+                <Sparkle size={9} weight="fill" /> AI will validate on save
+              </span>
+            )}
           </div>
           <div className="mb-6">
-            <TagEditor
+            <TagSelect
               tags={form.foodPreferences}
-              onAdd={(t) =>
-                set("foodPreferences", [...form.foodPreferences, t])
-              }
-              onRemove={(t) =>
-                set(
-                  "foodPreferences",
-                  form.foodPreferences.filter((p) => p !== t),
-                )
-              }
-              placeholder="Add preference"
+              onAdd={(t) => { set("foodPreferences", [...form.foodPreferences, t]); setFieldErrors((e) => ({ ...e, foodPreferences: null })); }}
+              onRemove={(t) => set("foodPreferences", form.foodPreferences.filter((p) => p !== t))}
+              options={PREFERENCE_OPTIONS}
+              placeholder="Select a food preference…"
               colorClass="bg-slate-100 text-slate-700 ring-slate-200"
+              error={fieldErrors.foodPreferences}
+              disabled={validating}
             />
           </div>
 

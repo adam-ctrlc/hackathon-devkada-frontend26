@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { Card } from "../../../components/ui/Card.jsx";
 import { Button } from "../../../components/ui/Button.jsx";
 import { Input, Field } from "../../../components/ui/Input.jsx";
-import { Check, CheckCircle, X } from "@phosphor-icons/react";
+import { Check, CheckCircle, X, Sparkle, ArrowsClockwise } from "@phosphor-icons/react";
 import { apiRequest } from "../../../lib/api.js";
+import { runGeminiLiveJson } from "../../../lib/gemini-live.js";
 import {
   clearAuthSession,
   getAuthSession,
@@ -17,6 +18,38 @@ import {
   statusToOptionId,
 } from "../../../data/status-options.jsx";
 import { StatusSkeleton } from "../components/RouteSkeletons.jsx";
+
+const buildRefinePrompt = ({ notes, customRestriction, profile }) => {
+  const ctx = {
+    age: profile.age ?? null,
+    sex: profile.sex ?? null,
+    healthGoal: profile.healthGoal ?? null,
+    healthStatus: profile.healthContext?.status ?? null,
+    allergies: profile.allergies ?? [],
+    dietRestrictions: profile.dietRestrictions ?? [],
+    foodPreferences: profile.foodPreferences ?? [],
+  };
+
+  return `You are a health profile assistant. The user has entered free-text health notes and a custom restriction.
+Your job is to:
+1. Fix grammar and spelling
+2. Rewrite each field as a clear, specific, first-person sentence that a medical AI can act on
+3. Use the user's profile context below to add specificity — for example, if they mention an allergy, name the specific ingredient class; if they mention a restriction, include any relevant timeframe or severity if implied
+4. Keep it concise (1–3 sentences per field max)
+5. Do NOT add information not implied by the user's input — only clarify and correct
+
+User profile context:
+${JSON.stringify(ctx, null, 2)}
+
+Raw personal notes: ${notes ? `"${notes}"` : "(empty — return empty string)"}
+Raw custom restriction: ${customRestriction ? `"${customRestriction}"` : "(empty — return empty string)"}
+
+Return JSON only:
+{
+  "notes": "<refined notes or empty string>",
+  "customRestriction": "<refined restriction or empty string>"
+}`;
+};
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function Status() {
@@ -31,6 +64,7 @@ export default function Status() {
   const [savedCustomRestriction, setSavedCustomRestriction] = useState("");
   const [loading, setLoading] = useState(true);
   const [dirty, setDirty] = useState(false);
+  const [refining, setRefining] = useState(false);
   const [toast, setToast] = useState(null);
 
   const showToast = (msg) => {
@@ -109,14 +143,41 @@ export default function Status() {
       return;
     }
 
+    let finalNotes = notes;
+    let finalRestriction = customRestriction;
+
+    if (notes.trim() || customRestriction.trim()) {
+      setRefining(true);
+      showToast("Refining your notes with AI…");
+      try {
+        const refined = await runGeminiLiveJson({
+          prompt: buildRefinePrompt({ notes, customRestriction, profile }),
+          temperature: 0.2,
+          timeoutMs: 60000,
+        });
+        if (refined?.notes !== undefined) {
+          finalNotes = String(refined.notes ?? "").trim() || notes;
+          setNotes(finalNotes);
+        }
+        if (refined?.customRestriction !== undefined) {
+          finalRestriction = String(refined.customRestriction ?? "").trim() || customRestriction;
+          setCustom(finalRestriction);
+        }
+      } catch {
+        // AI refinement failed — save raw input as fallback
+      } finally {
+        setRefining(false);
+      }
+    }
+
     try {
       const data = await apiRequest("/health-context", {
         method: "POST",
         body: {
           profileId,
           status: option?.label ?? selected,
-          notes,
-          customRestriction,
+          notes: finalNotes,
+          customRestriction: finalRestriction,
         },
       });
       const session = getAuthSession();
@@ -130,10 +191,10 @@ export default function Status() {
         });
       }
       setSavedStatus(selected);
-      setSavedNotes(notes);
-      setSavedCustomRestriction(customRestriction);
+      setSavedNotes(finalNotes);
+      setSavedCustomRestriction(finalRestriction);
       setDirty(false);
-      showToast("Health status updated");
+      showToast("Health status saved — AI refined your notes");
     } catch (err) {
       showToast(err.message);
     }
@@ -180,13 +241,17 @@ export default function Status() {
           </p>
         </div>
         <div className="flex gap-2">
-          {dirty && (
+          {dirty && !refining && (
             <Button variant="ghost" size="sm" onClick={discard}>
               <X size={13} /> Discard
             </Button>
           )}
-          <Button variant="primary" size="sm" onClick={save} disabled={!dirty}>
-            <Check size={14} /> Save status
+          <Button variant="primary" size="sm" onClick={save} disabled={!dirty || refining}>
+            {refining ? (
+              <><ArrowsClockwise size={13} className="animate-spin" /> Refining…</>
+            ) : (
+              <><Check size={14} /> Save status</>
+            )}
           </Button>
         </div>
       </div>
@@ -251,12 +316,21 @@ export default function Status() {
                   setDirty(true);
                 }}
                 rows={3}
-                placeholder="e.g. Day 12 of recovery. Feeling better. Doctor said I can start light walking."
-                className="w-full px-3.5 py-2.5 rounded-lg bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-brand-500 outline-none text-[14px] resize-none"
+                disabled={refining}
+                placeholder="e.g. i am allergy to milk, day 12 of recovery"
+                className="w-full px-3.5 py-2.5 rounded-lg bg-white ring-1 ring-slate-200 focus:ring-2 focus:ring-brand-500 outline-none text-[14px] resize-none disabled:opacity-60 disabled:cursor-wait"
               />
-              <p className="text-[11px] text-slate-500 mt-1">
-                Used to personalize AI food guidance and diary reflections.
-              </p>
+              <div className="mt-1.5 flex flex-col gap-1">
+                {notes.trim() && (
+                  <p className="text-[11px] text-brand-600 flex items-center gap-1 font-medium">
+                    <Sparkle size={10} weight="fill" />
+                    AI will fix grammar and personalize this using your profile before saving
+                  </p>
+                )}
+                <p className="text-[11px] text-slate-500">
+                  Used to personalize AI food guidance and diary reflections.
+                </p>
+              </div>
             </Field>
             <Field label="Custom restriction or doctor's note">
               <Input
@@ -265,11 +339,21 @@ export default function Status() {
                   setCustom(e.target.value);
                   setDirty(true);
                 }}
+                disabled={refining}
                 placeholder="e.g. Avoid raw vegetables until May 20"
+                className="disabled:opacity-60 disabled:cursor-wait"
               />
-              <p className="text-[11px] text-slate-500 mt-1">
-                Private. Only used to flag incompatible foods.
-              </p>
+              <div className="mt-1.5 flex flex-col gap-1">
+                {customRestriction.trim() && (
+                  <p className="text-[11px] text-brand-600 flex items-center gap-1 font-medium">
+                    <Sparkle size={10} weight="fill" />
+                    AI will rewrite this as a clear, specific restriction before saving
+                  </p>
+                )}
+                <p className="text-[11px] text-slate-500">
+                  Private. Only used to flag incompatible foods.
+                </p>
+              </div>
             </Field>
           </Card>
         </div>

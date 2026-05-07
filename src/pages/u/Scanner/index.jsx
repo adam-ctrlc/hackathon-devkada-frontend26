@@ -759,12 +759,12 @@ export default function Scanner() {
         />
       )}
 
-      <div className="mb-7">
+      <div className="mb-5 sm:mb-7">
         <div>
           <div className="text-[11px] tracking-[0.18em] uppercase text-brand-600 font-semibold mb-2">
             Scanner
           </div>
-          <h1 className="font-display text-[34px] leading-[1.05] tracking-tight text-slate-900">
+          <h1 className="font-display text-[26px] sm:text-[34px] leading-[1.05] tracking-tight text-slate-900">
             What did you eat?
           </h1>
           <p className="text-slate-600 mt-2 max-w-[600px]">
@@ -777,7 +777,7 @@ export default function Scanner() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-5">
         <Card className="lg:col-span-7 p-0 overflow-hidden">
           <div>
-            <div className="relative aspect-[16/9] bg-slate-50 flex flex-col items-center justify-center gap-6 px-8 py-8">
+            <div className="relative bg-slate-50 flex flex-col items-center justify-center gap-4 sm:gap-6 px-4 sm:px-8 py-6 sm:py-8 sm:aspect-[16/9]">
               {scanning ? (
                 <div className="flex flex-col items-center gap-3">
                   <div className="relative flex items-center justify-center">
@@ -853,7 +853,7 @@ export default function Scanner() {
               </div>
 
               <div className="w-full max-w-[520px] rounded-2xl bg-white/90 ring-1 ring-slate-200 p-3">
-                <div className="flex items-center justify-between gap-3 mb-3">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 mb-3">
                   <div className="text-left">
                     <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
                       Meal timing
@@ -869,7 +869,7 @@ export default function Scanner() {
                       handleEatenAtChange(event.target.value)
                     }
                     disabled={scanning}
-                    className="h-9 w-[210px] px-3 rounded-xl bg-slate-50 ring-1 ring-slate-200 text-[12.5px] text-slate-700 outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50"
+                    className="h-9 w-full sm:w-[210px] px-3 rounded-xl bg-slate-50 ring-1 ring-slate-200 text-[12.5px] text-slate-700 outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50"
                   />
                 </div>
                 <div className="grid grid-cols-5 gap-1.5">
@@ -879,7 +879,7 @@ export default function Scanner() {
                       type="button"
                       onClick={() => handleMealPeriodSelect(value)}
                       disabled={scanning}
-                      className={`h-8 rounded-full text-[12px] font-medium transition disabled:opacity-50 ${
+                      className={`h-8 rounded-full text-[10px] sm:text-[12px] font-medium px-1 truncate transition disabled:opacity-50 ${
                         mealPeriod === value
                           ? "bg-slate-900 text-white"
                           : "bg-slate-50 text-slate-600 ring-1 ring-slate-200 hover:bg-brand-50 hover:text-brand-700 hover:ring-brand-100"
@@ -974,7 +974,7 @@ export default function Scanner() {
                         handleDeleteScan(r);
                       }}
                       title="Delete scan"
-                      className="ml-1 p-1.5 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition"
+                      className="ml-1 p-1.5 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 transition sm:opacity-0 sm:group-hover:opacity-100"
                     >
                       <Trash size={14} />
                     </button>
@@ -1137,13 +1137,13 @@ export default function Scanner() {
         </Card>
       ) : result ? (
         <Card ref={resultRef} className="overflow-hidden p-0 mb-5 scroll-mt-6">
-          <div className="relative p-7 bg-gradient-to-br from-brand-50/60 via-white to-cyan-50/40">
+          <div className="relative p-4 sm:p-7 bg-gradient-to-br from-brand-50/60 via-white to-cyan-50/40">
             <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-5">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] text-brand-600 font-semibold mb-2">
                   <Check size={11} weight="bold" /> Verified match
                 </div>
-                <h2 className="font-display text-[30px] leading-[1.05] text-slate-900 tracking-tight">
+                <h2 className="font-display text-[22px] sm:text-[30px] leading-[1.05] text-slate-900 tracking-tight">
                   {result.name}
                 </h2>
                 <div className="text-[13px] text-slate-500 mt-1.5">
@@ -1172,7 +1172,7 @@ export default function Scanner() {
                   </Pill>
                 </div>
               </div>
-              <div className="flex items-center gap-4 shrink-0">
+              <div className="flex items-center justify-between sm:justify-start gap-4 w-full sm:w-auto shrink-0">
                 <div
                   className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full ${
                     result.diff >= 0
@@ -1215,7 +1215,7 @@ export default function Scanner() {
             />
           )}
 
-          <div className="px-6 flex gap-1 border-b border-slate-100 bg-slate-50/50">
+          <div className="px-3 sm:px-6 flex gap-1 border-b border-slate-100 bg-slate-50/50 overflow-x-auto">
             {[
               { k: "overview", l: "Overview" },
               { k: "why", l: "Why this score" },
@@ -1224,7 +1224,7 @@ export default function Scanner() {
               <button
                 key={t.k}
                 onClick={() => setTab(t.k)}
-                className={`px-4 h-11 text-[13px] font-medium border-b-2 -mb-px transition ${tab === t.k ? "border-brand-600 text-brand-700" : "border-transparent text-slate-500 hover:text-slate-700"}`}
+                className={`shrink-0 px-4 h-11 text-[13px] font-medium border-b-2 -mb-px transition ${tab === t.k ? "border-brand-600 text-brand-700" : "border-transparent text-slate-500 hover:text-slate-700"}`}
               >
                 {t.l}
               </button>
@@ -1232,7 +1232,7 @@ export default function Scanner() {
           </div>
 
           {tab === "overview" && (
-            <div className="p-6 grid grid-cols-1 lg:grid-cols-12 gap-5">
+            <div className="p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-5">
               <div className="lg:col-span-7">
                 <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-3">
                   Per serving · vs daily target
@@ -1310,11 +1310,11 @@ export default function Scanner() {
                         className={`mt-5 rounded-xl p-4 flex items-start gap-3 ${patternToneStyles.card}`}
                       >
                         <div
-                          className={`w-9 h-9 rounded-lg grid place-items-center shrink-0 ${patternToneStyles.icon}`}
+                          className={`hidden sm:grid w-9 h-9 rounded-lg place-items-center shrink-0 ${patternToneStyles.icon}`}
                         >
                           <Sparkle size={16} />
                         </div>
-                        <div>
+                        <div className="flex-1 min-w-0">
                           <div
                             className={`text-[11px] uppercase tracking-wider font-semibold mb-1 ${patternToneStyles.eyebrow}`}
                           >
@@ -1351,12 +1351,12 @@ export default function Scanner() {
                         className={`mt-4 rounded-xl ring-1 p-4 flex items-start gap-3 ${mentalToneStyles.card}`}
                       >
                         <div
-                          className={`w-9 h-9 rounded-lg grid place-items-center shrink-0 ${mentalToneStyles.icon}`}
+                          className={`hidden sm:grid w-9 h-9 rounded-lg place-items-center shrink-0 ${mentalToneStyles.icon}`}
                         >
                           <Sparkle size={16} />
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <div
                               className={`text-[11px] uppercase tracking-wider font-semibold ${mentalToneStyles.eyebrow}`}
                             >
@@ -1491,7 +1491,7 @@ export default function Scanner() {
           )}
 
           {tab === "why" && (
-            <div className="p-6 max-w-[760px]">
+            <div className="p-4 sm:p-6 max-w-[760px]">
               <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-3">
                 How we scored {result.name}
               </div>
@@ -1580,7 +1580,7 @@ export default function Scanner() {
           )}
 
           {tab === "ingredients" && (
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <div className="text-[11px] uppercase tracking-wider text-slate-500 font-semibold mb-3">
                 Ingredients
               </div>
