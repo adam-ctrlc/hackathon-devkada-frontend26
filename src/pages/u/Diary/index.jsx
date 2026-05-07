@@ -48,6 +48,7 @@ export default function Diary() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [savingEntry, setSavingEntry] = useState(false);
+  const [deletingEntry, setDeletingEntry] = useState(false);
   const [generatingInsight, setGeneratingInsight] = useState(false);
   const [lockState, setLockState] = useState({
     checked: false,
@@ -197,7 +198,7 @@ export default function Diary() {
   };
 
   const deleteEntry = async () => {
-    if (entries.length === 1) return;
+    if (entries.length === 1 || deletingEntry) return;
     const previousEntries = entries;
     const previousActiveId = activeId;
     const remaining = entries.filter((e) => e.id !== activeId);
@@ -207,6 +208,7 @@ export default function Diary() {
     setError("");
 
     if (active.persisted) {
+      setDeletingEntry(true);
       try {
         await apiRequest(`/diary/${active.id}`, {
           method: "DELETE",
@@ -225,6 +227,8 @@ export default function Diary() {
         setActiveId(previousActiveId);
         setError(err.message || "Couldn't delete this entry.");
         return;
+      } finally {
+        setDeletingEntry(false);
       }
     }
   };
@@ -539,10 +543,10 @@ export default function Diary() {
             </button>
             <button
               onClick={deleteEntry}
-              disabled={entries.length === 1}
+              disabled={entries.length === 1 || deletingEntry}
               className="h-7 px-3 rounded-lg bg-slate-50 ring-1 ring-slate-200 text-[12px] text-red-500 hover:bg-red-50 hover:ring-red-200 inline-flex items-center gap-1.5 transition disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              <Trash size={12} /> Delete
+              <Trash size={12} /> {deletingEntry ? "Deleting…" : "Delete"}
             </button>
             <button
               onClick={saveActive}

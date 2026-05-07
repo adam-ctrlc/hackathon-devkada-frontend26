@@ -35,6 +35,7 @@ export default function Swap() {
   const [page, setPage] = useState(1);
   const [viewingSwap, setViewingSwap] = useState(null);
   const [generating, setGenerating] = useState(false);
+  const [mutatingIds, setMutatingIds] = useState(() => new Set());
   const session = getAuthSession();
   const [profile, setProfile] = useState(session?.profile ?? null);
   const profileId = profile?.id ?? session?.profile?.id;
@@ -150,33 +151,42 @@ export default function Swap() {
     setPage(1);
   };
 
-  const accept = (id) => {
-    setSwaps((prev) => {
-      const next = prev.map((s) =>
-        s.id === id ? { ...s, status: "accepted" } : s,
-      );
+  const setMutating = (id, flag) =>
+    setMutatingIds((prev) => {
+      const next = new Set(prev);
+      flag ? next.add(id) : next.delete(id);
       return next;
     });
+
+  const accept = (id) => {
+    if (mutatingIds.has(id)) return;
+    setMutating(id, true);
+    setSwaps((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, status: "accepted" } : s)),
+    );
     apiRequest(`/swaps/${id}`, {
       method: "PATCH",
       body: { status: "accepted" },
       timeoutMs: 10000,
-    }).catch((err) => setAiNote(err.message));
+    })
+      .catch((err) => setAiNote(err.message))
+      .finally(() => setMutating(id, false));
     showToast("Swap accepted — saved to your next-time plan");
   };
 
   const dismiss = (id) => {
-    setSwaps((prev) => {
-      const next = prev.map((s) =>
-        s.id === id ? { ...s, status: "dismissed" } : s,
-      );
-      return next;
-    });
+    if (mutatingIds.has(id)) return;
+    setMutating(id, true);
+    setSwaps((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, status: "dismissed" } : s)),
+    );
     apiRequest(`/swaps/${id}`, {
       method: "PATCH",
       body: { status: "dismissed" },
       timeoutMs: 10000,
-    }).catch((err) => setAiNote(err.message));
+    })
+      .catch((err) => setAiNote(err.message))
+      .finally(() => setMutating(id, false));
     showToast("Swap dismissed");
   };
 
@@ -229,17 +239,18 @@ export default function Swap() {
   };
 
   const restore = (id) => {
-    setSwaps((prev) => {
-      const next = prev.map((s) =>
-        s.id === id ? { ...s, status: "suggested" } : s,
-      );
-      return next;
-    });
+    if (mutatingIds.has(id)) return;
+    setMutating(id, true);
+    setSwaps((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, status: "suggested" } : s)),
+    );
     apiRequest(`/swaps/${id}`, {
       method: "PATCH",
       body: { status: "suggested" },
       timeoutMs: 10000,
-    }).catch((err) => setAiNote(err.message));
+    })
+      .catch((err) => setAiNote(err.message))
+      .finally(() => setMutating(id, false));
   };
 
   return (
@@ -396,6 +407,7 @@ export default function Swap() {
               onAccept={accept}
               onDismiss={dismiss}
               onRestore={restore}
+              mutatingIds={mutatingIds}
             />
           ) : (
             <div className="mb-8 rounded-2xl bg-slate-50 ring-1 ring-slate-200 p-8 flex flex-col items-center gap-3 text-center">

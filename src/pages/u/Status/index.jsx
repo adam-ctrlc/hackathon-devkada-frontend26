@@ -73,6 +73,7 @@ export default function Status() {
   const [loading, setLoading] = useState(true);
   const [dirty, setDirty] = useState(false);
   const [refining, setRefining] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
 
   const showToast = (msg) => {
@@ -179,6 +180,7 @@ export default function Status() {
       }
     }
 
+    setSaving(true);
     try {
       const data = await apiRequest("/health-context", {
         method: "POST",
@@ -206,6 +208,8 @@ export default function Status() {
       showToast("Health status saved — AI refined your notes");
     } catch (err) {
       showToast(err.message);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -250,7 +254,7 @@ export default function Status() {
           </p>
         </div>
         <div className="flex gap-2">
-          {dirty && !refining && (
+          {dirty && !refining && !saving && (
             <Button variant="ghost" size="sm" onClick={discard}>
               <X size={13} /> Discard
             </Button>
@@ -259,11 +263,15 @@ export default function Status() {
             variant="primary"
             size="sm"
             onClick={save}
-            disabled={!dirty || refining}
+            disabled={!dirty || refining || saving}
           >
             {refining ? (
               <>
                 <ArrowsClockwise size={13} className="animate-spin" /> Refining…
+              </>
+            ) : saving ? (
+              <>
+                <ArrowsClockwise size={13} className="animate-spin" /> Saving…
               </>
             ) : (
               <>

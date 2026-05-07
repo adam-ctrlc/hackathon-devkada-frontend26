@@ -63,10 +63,12 @@ export default function Workout() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingWater, setSavingWater] = useState(false);
+  const [deletingWaterId, setDeletingWaterId] = useState(null);
   const [editingWaterId, setEditingWaterId] = useState(null);
   const [showWater, setShowWater] = useState(false);
   const [showSleep, setShowSleep] = useState(false);
   const [savingSleep, setSavingSleep] = useState(false);
+  const [deletingSleepId, setDeletingSleepId] = useState(null);
   const [editingSleepId, setEditingSleepId] = useState(null);
   const [waterForm, setWaterForm] = useState(() => ({
     glasses: "1",
@@ -293,6 +295,7 @@ export default function Workout() {
   const deleteWaterLog = async (logId) => {
     if (!logId) return;
     const previous = waterLogs;
+    setDeletingWaterId(logId);
     setWaterLogs((current) => current.filter((item) => item.id !== logId));
     if (editingWaterId === logId) resetWaterForm();
 
@@ -305,6 +308,8 @@ export default function Workout() {
     } catch (err) {
       setWaterLogs(previous);
       showToast(err.message || "Water delete failed");
+    } finally {
+      setDeletingWaterId(null);
     }
   };
 
@@ -352,6 +357,7 @@ export default function Workout() {
   const deleteSleepLog = async (logId) => {
     if (!logId) return;
     const previous = sleepLogs;
+    setDeletingSleepId(logId);
     setSleepLogs((current) => current.filter((item) => item.id !== logId));
     if (editingSleepId === logId) resetSleepForm();
 
@@ -364,6 +370,8 @@ export default function Workout() {
     } catch (err) {
       setSleepLogs(previous);
       showToast(err.message || "Sleep delete failed");
+    } finally {
+      setDeletingSleepId(null);
     }
   };
 
@@ -830,15 +838,16 @@ export default function Workout() {
                   <Button
                     variant="ghost"
                     size="sm"
+                    disabled={deletingWaterId === editingWaterId}
                     onClick={() => {
                       const id = editingWaterId;
                       setShowWater(false);
                       resetWaterForm();
                       deleteWaterLog(id);
                     }}
-                    className="!text-red-600 hover:!bg-red-50"
+                    className="!text-red-600 hover:!bg-red-50 disabled:opacity-50"
                   >
-                    Delete
+                    {deletingWaterId === editingWaterId ? "Deleting…" : "Delete"}
                   </Button>
                 )}
                 <Button
@@ -989,15 +998,16 @@ export default function Workout() {
                 <Button
                   variant="ghost"
                   size="sm"
+                  disabled={deletingSleepId === editingSleepId}
                   onClick={() => {
                     const id = editingSleepId;
                     setShowSleep(false);
                     resetSleepForm();
                     deleteSleepLog(id);
                   }}
-                  className="!text-red-600 hover:!bg-red-50"
+                  className="!text-red-600 hover:!bg-red-50 disabled:opacity-50"
                 >
-                  Delete
+                  {deletingSleepId === editingSleepId ? "Deleting…" : "Delete"}
                 </Button>
               )}
               <Button

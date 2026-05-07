@@ -143,6 +143,7 @@ export default function Profile() {
   const [dirty, setDirty] = useState(false);
   const [saved, setSaved] = useState(false);
   const [validating, setValidating] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const [showPin, setShowPin] = useState(false);
   const [showAvatar, setShowAvatar] = useState(false);
@@ -311,6 +312,7 @@ export default function Profile() {
       }
     }
 
+    setSaving(true);
     try {
       const data = await apiRequest(`/profiles/${profileId}`, {
         method: "PATCH",
@@ -371,6 +373,8 @@ export default function Profile() {
       );
     } catch (err) {
       showToast(formatApiError(err));
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -452,7 +456,7 @@ export default function Profile() {
           </p>
         </div>
         <div className="flex gap-2">
-          {dirty && !validating && (
+          {dirty && !validating && !saving && (
             <Button variant="ghost" size="sm" onClick={discard}>
               Discard
             </Button>
@@ -461,12 +465,16 @@ export default function Profile() {
             variant="primary"
             size="sm"
             onClick={saveProfile}
-            disabled={!dirty || validating}
+            disabled={!dirty || validating || saving}
           >
             {validating ? (
               <>
                 <ArrowsClockwise size={13} className="animate-spin" />{" "}
                 Validating…
+              </>
+            ) : saving ? (
+              <>
+                <ArrowsClockwise size={13} className="animate-spin" /> Saving…
               </>
             ) : saved ? (
               <>

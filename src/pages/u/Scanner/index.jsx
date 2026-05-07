@@ -154,6 +154,7 @@ export default function Scanner() {
   const [savingMentalCheckin, setSavingMentalCheckin] = useState(false);
   const [latestCheckIn, setLatestCheckIn] = useState(null);
   const [cameraOpen, setCameraOpen] = useState(false);
+  const [deletingIds, setDeletingIds] = useState(() => new Set());
 
   const fileRef = useRef(null);
   const resultRef = useRef(null);
@@ -554,6 +555,7 @@ export default function Scanner() {
   };
 
   const handleDeleteScan = async (scan) => {
+    setDeletingIds((prev) => new Set(prev).add(scan.id));
     try {
       await apiRequest(`/scans/${scan.id}`, { method: "DELETE" });
       const nextScans = scans.filter((s) => s.id !== scan.id);
@@ -568,6 +570,12 @@ export default function Scanner() {
       showToast(`Deleted: ${scan.productName}`);
     } catch (err) {
       showToast(err.message);
+    } finally {
+      setDeletingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(scan.id);
+        return next;
+      });
     }
   };
 
@@ -999,8 +1007,9 @@ export default function Scanner() {
                         e.stopPropagation();
                         handleDeleteScan(r);
                       }}
+                      disabled={deletingIds.has(r.id)}
                       title="Delete scan"
-                      className="ml-1 p-1.5 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 transition sm:opacity-0 sm:group-hover:opacity-100"
+                      className="ml-1 p-1.5 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 transition sm:opacity-0 sm:group-hover:opacity-100 disabled:opacity-40 disabled:cursor-wait"
                     >
                       <Trash size={14} />
                     </button>

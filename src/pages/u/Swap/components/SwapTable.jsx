@@ -22,6 +22,7 @@ export function SwapTable({
   onAccept,
   onDismiss,
   onRestore,
+  mutatingIds = new Set(),
 }) {
   const pageNumbers = Array.from(
     { length: totalPages },
@@ -130,15 +131,17 @@ export function SwapTable({
                       <>
                         <button
                           type="button"
+                          disabled={mutatingIds.has(swap.id)}
                           onClick={() => onAccept(swap.id)}
-                          className="w-8 h-8 rounded-lg bg-brand-600 text-white hover:bg-brand-700 transition grid place-items-center"
+                          className="w-8 h-8 rounded-lg bg-brand-600 text-white hover:bg-brand-700 transition grid place-items-center disabled:opacity-50 disabled:cursor-wait"
                         >
                           <Check size={14} />
                         </button>
                         <button
                           type="button"
+                          disabled={mutatingIds.has(swap.id)}
                           onClick={() => onDismiss(swap.id)}
-                          className="w-8 h-8 rounded-lg bg-white ring-1 ring-slate-200 text-slate-500 hover:text-red-600 hover:ring-red-100 hover:bg-red-50 transition grid place-items-center"
+                          className="w-8 h-8 rounded-lg bg-white ring-1 ring-slate-200 text-slate-500 hover:text-red-600 hover:ring-red-100 hover:bg-red-50 transition grid place-items-center disabled:opacity-50 disabled:cursor-wait"
                         >
                           <X size={14} />
                         </button>
@@ -146,8 +149,9 @@ export function SwapTable({
                     ) : (
                       <button
                         type="button"
+                        disabled={mutatingIds.has(swap.id)}
                         onClick={() => onRestore(swap.id)}
-                        className="w-8 h-8 rounded-lg bg-white ring-1 ring-slate-200 text-slate-500 hover:text-brand-700 hover:ring-brand-200 hover:bg-brand-50 transition grid place-items-center"
+                        className="w-8 h-8 rounded-lg bg-white ring-1 ring-slate-200 text-slate-500 hover:text-brand-700 hover:ring-brand-200 hover:bg-brand-50 transition grid place-items-center disabled:opacity-50 disabled:cursor-wait"
                       >
                         <ArrowsClockwise size={14} />
                       </button>
