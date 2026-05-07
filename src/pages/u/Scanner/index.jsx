@@ -51,6 +51,7 @@ import {
   buildScannerMentalSupport,
   buildScannerCheckinDiaryPayload,
 } from "../../../utils/scanner.js";
+import CameraScanModal from "./components/CameraScanModal.jsx";
 import { ManualScanModal } from "./components/ManualScanModal.jsx";
 import { ScannerSwapSection } from "./components/ScannerSwapSection.jsx";
 import { ScannerBudgetModal } from "./components/ScannerBudgetModal.jsx";
@@ -152,6 +153,7 @@ export default function Scanner() {
   const [showMentalCheckin, setShowMentalCheckin] = useState(false);
   const [savingMentalCheckin, setSavingMentalCheckin] = useState(false);
   const [latestCheckIn, setLatestCheckIn] = useState(null);
+  const [cameraOpen, setCameraOpen] = useState(false);
 
   const fileRef = useRef(null);
   const resultRef = useRef(null);
@@ -505,6 +507,21 @@ export default function Scanner() {
     }
   };
 
+  const processBarcode = async ({ barcode, file }) => {
+    showToast(`Barcode detected: ${barcode} — looking up product…`);
+    const productData = await fetchOpenFoodFacts(barcode);
+    const productName = productData?.productName ?? barcode;
+    showToast(
+      productData
+        ? `Found: ${productName} — analysing…`
+        : `No product data found, sending to AI…`,
+    );
+    const scan = await runBackendScan({ productName, barcode, productData });
+    if (scan?.id && file) {
+      attachScanImage(scan.id, file);
+    }
+  };
+
   const onFileChange = async (e) => {
     if (!e.target.files?.length) return;
     const file = e.target.files[0];
@@ -513,25 +530,22 @@ export default function Scanner() {
     try {
       const barcode = await decodeBarcodeFromFile(file);
       if (barcode) {
-        showToast(`Barcode detected: ${barcode} — looking up product…`);
-        const productData = await fetchOpenFoodFacts(barcode);
-        const productName = productData?.productName ?? barcode;
-        showToast(
-          productData
-            ? `Found: ${productName} — analysing…`
-            : `No product data found, sending to AI…`,
-        );
-        const scan = await runBackendScan({
-          productName,
-          barcode,
-          productData,
-        });
-        if (scan?.id) {
-          attachScanImage(scan.id, file);
-        }
+        await processBarcode({ barcode, file });
         return;
       }
       showToast("No barcode detected. Please upload a clear barcode image.");
+    } catch (err) {
+      showToast(err.message);
+    } finally {
+      setScanning(false);
+    }
+  };
+
+  const handleCameraDetect = async ({ barcode, file }) => {
+    setCameraOpen(false);
+    setScanning(true);
+    try {
+      await processBarcode({ barcode, file });
     } catch (err) {
       showToast(err.message);
     } finally {
@@ -724,6 +738,12 @@ export default function Scanner() {
         </div>
       )}
 
+      <CameraScanModal
+        open={cameraOpen}
+        onClose={() => setCameraOpen(false)}
+        onDetect={handleCameraDetect}
+      />
+
       {showManual && (
         <ManualScanModal
           value={manualFood}
@@ -821,7 +841,7 @@ export default function Scanner() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-[520px]">
                 <button
-                  onClick={openImagePicker}
+                  onClick={() => setCameraOpen(true)}
                   disabled={scanning}
                   className="h-11 rounded-lg bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white text-[13px] font-medium inline-flex items-center justify-center gap-2 transition"
                 >
