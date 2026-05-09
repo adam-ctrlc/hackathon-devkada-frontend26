@@ -343,11 +343,14 @@ export default function Landing() {
                 {[
                   ["50K+", "Foods tracked"],
                   ["10K+", "Active users"],
-                  ["4.8★", "Rating"],
-                ].map(([n, l]) => (
+                  ["4.8", "Rating", true],
+                ].map(([n, l, withStar]) => (
                   <div key={l}>
-                    <div className="font-extrabold text-xl leading-none text-brand-700">
+                    <div className="font-extrabold text-xl leading-none text-brand-700 flex items-center gap-1">
                       {n}
+                      {withStar && (
+                        <Star size={16} weight="fill" className="text-brand-500" />
+                      )}
                     </div>
                     <div className="text-[11px] text-slate-400 uppercase tracking-widest mt-1">
                       {l}
@@ -382,8 +385,9 @@ export default function Landing() {
                       style={{ width: "87%" }}
                     />
                   </div>
-                  <div className="text-xs font-bold mt-2 text-brand-600">
-                    ✓ On track
+                  <div className="flex items-center gap-1 text-xs font-bold mt-2 text-brand-600">
+                    <Check size={12} weight="bold" />
+                    On track
                   </div>
                   <div className="absolute -bottom-2.5 left-6 w-5 h-5 bg-white border border-slate-100 border-t-0 border-r-0 rotate-[-45deg] rounded-bl shadow-sm" />
                 </div>
@@ -430,14 +434,17 @@ export default function Landing() {
               ["50K+", "Foods in database"],
               ["10K+", "Active users"],
               ["98%", "Scan accuracy"],
-              ["4.8★", "Average rating"],
-            ].map(([n, l], i) => (
+              ["4.8", "Average rating", true],
+            ].map(([n, l, withStar], i) => (
               <div
                 key={l}
                 className={`py-6 px-4 text-center ${i < 3 ? "border-r border-brand-100" : ""}`}
               >
-                <div className="font-extrabold text-[1.75rem] leading-none text-brand-700">
+                <div className="font-extrabold text-[1.75rem] leading-none text-brand-700 inline-flex items-center gap-1">
                   {n}
+                  {withStar && (
+                    <Star size={20} weight="fill" className="text-brand-500" />
+                  )}
                 </div>
                 <div className="text-[11px] text-brand-600/70 uppercase tracking-widest mt-1">
                   {l}
