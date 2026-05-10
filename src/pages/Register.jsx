@@ -358,7 +358,7 @@ export default function Register() {
               </div>
             ) : null}
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5" noValidate>
               <Field label="Username">
                 <Input
                   placeholder="jane.doe"
@@ -383,7 +383,7 @@ export default function Register() {
               <Field label="Email">
                 <Input
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder="you@gmail.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   autoComplete="email"

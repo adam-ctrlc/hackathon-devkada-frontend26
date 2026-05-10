@@ -458,7 +458,7 @@ export default function Login() {
             <Field label="Email">
               <Input
                 type="email"
-                placeholder="you@example.com"
+                placeholder="you@gmail.com"
                 value={resetState.email}
                 autoComplete="email"
                 onChange={(e) =>
